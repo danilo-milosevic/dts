@@ -1,0 +1,17 @@
+.btn {
+  display: inline-grid; place-items: center; flex: none; border-radius: 50%; position: relative;
+  width: var(--size-icon-btn-sm); height: var(--size-icon-btn-sm); color: var(--text-secondary); border: 1.5px solid transparent;
+  transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast), transform var(--dur-fast) var(--ease-out);
+}
+.btn:active:not(:disabled) { transform: scale(0.92); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.md { width: var(--size-icon-btn-md); height: var(--size-icon-btn-md); }
+.ghost:hover:not(:disabled) { background: var(--bg-hover); color: var(--text-primary); }
+.soft { background: var(--bg-inset); color: var(--text-primary); }
+.soft:hover:not(:disabled) { border-color: var(--accent-primary); }
+.accent { background: var(--accent-primary); color: var(--text-on-accent); }
+.accent:hover:not(:disabled) { filter: brightness(1.1); }
+.danger { color: var(--accent-danger); }
+.danger:hover:not(:disabled) { background: var(--bg-danger-soft); }
+.active { color: var(--accent-primary); border-color: var(--accent-primary); }
+.badge { position: absolute; top: -2px; right: -2px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--accent-primary); color: var(--text-on-accent); font-size: 10px; font-weight: var(--fw-semibold); display: grid; place-items: center; }

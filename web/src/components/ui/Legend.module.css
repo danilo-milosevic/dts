@@ -1,0 +1,6 @@
+.legend { display: flex; gap: var(--space-4); flex-wrap: wrap; }
+.item { display: inline-flex; align-items: center; gap: var(--space-8); padding: var(--space-4) var(--space-8); border-radius: 4px; font-size: var(--fs-label); font-weight: var(--fw-medium); color: var(--text-primary); transition: color var(--dur-fast), opacity var(--dur-fast), background-color var(--dur-fast); }
+.item:hover { background: var(--bg-hover); }
+.sw { width: 10px; height: 10px; border-radius: 50%; background: var(--tone); border: 1.5px solid var(--tone); transition: background-color var(--dur-base); }
+.off { color: var(--text-muted); text-decoration: line-through; }
+.off .sw { background: transparent; }

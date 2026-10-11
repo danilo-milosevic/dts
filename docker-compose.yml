@@ -1,0 +1,18 @@
+# docker compose up --build -d   → http://localhost:8080
+services:
+  dts:
+    build: .
+    image: dts-encoder
+    container_name: dts-encoder
+    ports:
+      - "8080:8080"
+    volumes:
+      - dts-data:/data          # uploads, encoded files, database — survives rebuilds
+    environment:
+      DTS_WORKERS: "4"          # parallel encodes
+      DTS_MAX_UPLOAD_MB: "8192"
+    init: true                  # forwards Ctrl+C / docker stop to the server so ffmpeg jobs stop cleanly
+    restart: unless-stopped
+
+volumes:
+  dts-data:

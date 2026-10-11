@@ -1,0 +1,4 @@
+flask>=3.0
+numpy>=1.26
+# optional, production-grade WSGI server used by run.py when installed
+waitress>=3.0

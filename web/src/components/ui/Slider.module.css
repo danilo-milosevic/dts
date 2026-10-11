@@ -1,0 +1,12 @@
+.root { position: relative; height: 16px; flex: 1; min-width: 60px; cursor: pointer; touch-action: none; display: flex; align-items: center; }
+.track { position: absolute; left: 0; right: 0; height: 4px; border-radius: 2px; background: var(--border-default); }
+.fill { position: absolute; left: 0; height: 4px; border-radius: 2px; background: var(--accent-primary); }
+.knob {
+  position: absolute; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--text-primary); border: 2px solid var(--accent-primary);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast);
+}
+.root:hover .knob, .dragging .knob { transform: scale(1.2); box-shadow: 0 0 0 4px var(--bg-accent-soft); }
+.root:focus-visible { box-shadow: none; }
+.root:focus-visible .knob { box-shadow: var(--shadow-focus); }
+.root.animate .fill { transition: width var(--dur-base) var(--ease-out); }
+.root.animate .knob { transition: left var(--dur-base) var(--ease-out), transform var(--dur-fast); }

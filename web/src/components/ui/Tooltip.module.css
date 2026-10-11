@@ -1,0 +1,6 @@
+.tip {
+  position: relative; display: flex; flex-direction: column; gap: 2px; white-space: nowrap;
+  padding: var(--space-4) var(--space-12); border-radius: 6px; background: var(--bg-panel); border: 1px solid var(--border-default); box-shadow: var(--shadow-tooltip);
+}
+.title { font-size: var(--fs-label); font-weight: var(--fw-medium); color: var(--text-primary); }
+.detail { font-size: var(--fs-small); color: var(--text-secondary); }

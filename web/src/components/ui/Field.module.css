@@ -1,0 +1,10 @@
+.inline { display: flex; align-items: center; gap: var(--space-12); padding: var(--space-4) 0; min-width: 0; }
+.stacked { display: flex; flex-direction: column; gap: var(--space-8); padding: var(--space-4) 0; }
+.text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.label { font-size: var(--fs-label); font-weight: var(--fw-medium); color: var(--text-primary); }
+.hint { font-size: var(--fs-small); color: var(--text-muted); }
+.control { flex: none; display: flex; align-items: center; min-width: 0; }
+.stacked .control { width: 100%; }
+.stacked .control > * { flex: 1; }
+.section { display: flex; flex-direction: column; gap: var(--space-4); }
+.sectionTitle { font-size: var(--fs-caption); font-weight: var(--fw-medium); letter-spacing: var(--letter-spacing-caption); text-transform: uppercase; color: var(--text-muted); margin-bottom: var(--space-4); }

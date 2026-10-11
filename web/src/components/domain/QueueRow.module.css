@@ -1,0 +1,18 @@
+.row {
+  display: flex; align-items: center; gap: var(--space-16); height: var(--size-queue-row-h); padding: 0 var(--space-16);
+  border-radius: var(--radius-md); background: var(--bg-card); border: 1px solid var(--border-subtle);
+  transition: border-color var(--dur-base), background-color var(--dur-base), box-shadow var(--dur-base);
+}
+.encoding { border-color: var(--accent-primary); }
+.dragging { box-shadow: var(--shadow-md); }
+.handle { color: var(--text-muted); cursor: grab; display: grid; place-items: center; }
+.handle:active { cursor: grabbing; }
+.text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.name { font-size: var(--fs-label); font-weight: var(--fw-medium); }
+.preset { font-size: var(--fs-small); color: var(--text-muted); }
+.progress { width: 240px; flex: none; display: flex; flex-direction: column; gap: 6px; }
+.labels { display: flex; justify-content: space-between; font-size: var(--fs-caption); font-weight: var(--fw-medium); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.eta { color: var(--text-muted); }
+.err { color: var(--accent-danger); }
+.ratio { width: 72px; flex: none; }
+@media (max-width: 1500px) { .progress { width: 180px; } }

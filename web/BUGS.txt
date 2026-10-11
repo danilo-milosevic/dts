@@ -1,0 +1,14 @@
+- ✓ Changing to mono doesn't actually convert to mono, only shows one channel
+- ✓ After changing to mono, switching tabs etc music is still playing
+- ✓ Switching pages, closing and opening sidepanels causes rerender/jitters that are visible
+- ✓ Compact track list setting does nothing - remove it
+- ✓ CPU threads setting makes no sense - the server will decide CPU threads
+- ✓ Advanced tokens - remove it completely
+- ✓ Text next to titles (Compress, Logs etc) should be vertically aligned to middle of title
+- ✓ Changing to show waveform loses the progress line
+- ✓ Side panels should be resizable with accent color border while resizing
+- ✓ Changing to another tab (from Compress to Compare for example) the view in the center kinda jitters
+- ✓ When selecting "search tracks" both the outside container and inside search field get outlines. Only outer should be outlined
+- ✓ Remove log tab and logs in queue tab
+- ✓ Compare tab doesnt need "Speed" metric, session choice
+- ✓ Completely remove DTS-HD considering FFmpeg doesnt allow for it

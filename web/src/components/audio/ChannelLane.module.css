@@ -1,0 +1,18 @@
+/* One row per audio channel. All three columns stretch to the lane height, so the meter,
+   the header and the waveform share the same top and bottom edge. */
+.lane { display: grid; grid-template-columns: var(--size-lane-head-w) auto minmax(0, 1fr); gap: var(--space-16); height: var(--lane-h, var(--size-lane-h)); align-items: stretch; }
+.head { display: flex; flex-direction: column; justify-content: space-between; min-width: 0; padding: var(--space-4) 0; }
+.name { font-size: var(--fs-subheading); font-weight: var(--fw-medium); color: var(--text-primary); }
+.pos { font-size: var(--fs-small); color: var(--text-muted); }
+.controls { display: flex; flex-direction: column; gap: var(--space-8); }
+.ms { display: flex; gap: var(--space-4); }
+.msBtn {
+  width: 24px; height: 22px; border-radius: 4px; background: var(--bg-inset); border: 1px solid var(--border-subtle); color: var(--text-secondary);
+  font-size: var(--fs-caption); font-weight: var(--fw-semibold); transition: background-color var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+}
+.msBtn:hover { border-color: var(--border-default); }
+.muteOn { background: var(--accent-danger); border-color: var(--accent-danger); color: var(--text-on-strong); }
+.soloOn { background: var(--accent-warning); border-color: var(--accent-warning); color: var(--text-on-accent); }
+.gain { display: flex; align-items: center; gap: var(--space-8); color: var(--text-muted); }
+.gainValue { font-size: var(--fs-caption); font-weight: var(--fw-medium); color: var(--text-secondary); width: 44px; text-align: right; font-variant-numeric: tabular-nums; flex: none; }
+.dim { opacity: 0.45; transition: opacity var(--dur-base); }

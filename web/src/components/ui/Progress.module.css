@@ -1,0 +1,8 @@
+.track { position: relative; height: 6px; border-radius: 3px; background: var(--bg-inset); overflow: hidden; width: 100%; }
+.fill { position: absolute; inset: 0 auto 0 0; border-radius: 3px; background: var(--tone); transition: width var(--dur-slow) var(--ease-out); }
+.live .fill::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent); background-size: 60px 100%; animation: sweep 1.1s linear infinite;
+}
+.muted { opacity: 0.35; }
+@keyframes sweep { from { background-position: -60px 0; } to { background-position: 300px 0; } }

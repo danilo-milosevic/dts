@@ -1,0 +1,7 @@
+.panel { height: 100%; display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-16); width: var(--side-w, var(--size-sidepanel-w)); }
+.header { display: flex; align-items: center; gap: var(--space-12); flex: none; }
+.title { font-size: var(--fs-title); font-weight: var(--fw-semibold); }
+.body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: var(--space-12); margin: 0 calc(-1 * var(--space-8)); padding: 0 var(--space-8); }
+.card { background: var(--bg-panel); border-radius: var(--radius-lg); padding: var(--space-12) var(--space-16); display: flex; flex-direction: column; gap: var(--space-4); }
+.cardHead { display: flex; align-items: center; gap: var(--space-8); min-height: 32px; }
+.cardTitle { font-size: var(--fs-subheading); font-weight: var(--fw-medium); flex: 1; }

@@ -1,0 +1,13 @@
+.wave {
+  position: relative; height: 100%; min-width: 0; border-radius: var(--radius-md); overflow: hidden; cursor: crosshair;
+  background: var(--soft); border: 1.5px solid var(--tone); transition: background-color var(--dur-base), border-color var(--dur-base);
+}
+.layer { position: absolute; inset: 0; }
+.base { opacity: 0.45; }
+.bar { fill: var(--tone); transform-box: fill-box; transform-origin: center; }
+.enter { animation: grow var(--dur-chart) var(--ease-out) both; }
+@keyframes grow { from { transform: scaleY(0.05); opacity: 0; } }
+.playhead { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--accent-danger); pointer-events: none; }
+.hover { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--text-primary); opacity: 0.5; pointer-events: none; }
+.loading { position: absolute; inset: var(--space-12); }
+.clip { position: absolute; top: 0; height: 3px; background: var(--accent-danger); }

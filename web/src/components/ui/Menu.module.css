@@ -1,0 +1,6 @@
+.menu { position: fixed; z-index: 1000; min-width: 180px; padding: var(--space-4); background: var(--bg-panel); border: 1px solid var(--border-default); border-radius: var(--radius-md); box-shadow: var(--shadow-md); }
+.item { width: 100%; display: flex; align-items: center; gap: var(--space-8); padding: var(--space-8) var(--space-12); border-radius: var(--radius-sm); font-size: var(--fs-body); color: var(--text-primary); text-align: left; }
+.item:hover:not(:disabled) { background: var(--bg-hover); }
+.item:disabled { opacity: 0.4; cursor: not-allowed; }
+.danger { color: var(--accent-danger); }
+.sep { height: 1px; margin: var(--space-4) 0; background: var(--border-subtle); }

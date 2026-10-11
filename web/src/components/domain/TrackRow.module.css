@@ -1,0 +1,19 @@
+.row {
+  position: relative; display: flex; align-items: center; gap: var(--space-12); height: var(--size-track-row-h); padding: 0 var(--space-8) 0 var(--space-12);
+  border-radius: var(--radius-sm); border: 1.5px solid transparent; cursor: pointer; user-select: none;
+  transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-base) var(--ease-out);
+}
+.row:hover { background: var(--bg-hover); }
+.selected, .selected:hover { background: var(--bg-accent-soft); border-color: var(--accent-primary); }
+.text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.name { font-size: var(--fs-label); font-weight: var(--fw-medium); color: var(--text-primary); }
+.meta { font-size: var(--fs-small); color: var(--text-muted); }
+.tags { display: flex; gap: var(--space-4); flex: none; }
+.actions { display: flex; flex: none; opacity: 0.55; transition: opacity var(--dur-fast); }
+.row:hover .actions, .selected .actions, .row:focus-within .actions { opacity: 1; }
+
+/* resizable side panel: drop the least important tags first so the file name keeps room */
+.row { container-type: inline-size; }
+.text { min-width: 72px; }
+@container (max-width: 420px) { .tags > :first-child { display: none; } }
+@container (max-width: 360px) { .tags > :nth-child(2) { display: none; } }

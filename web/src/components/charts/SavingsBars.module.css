@@ -1,0 +1,14 @@
+.axis { display: grid; grid-template-columns: var(--name-w) 1fr var(--val-w); gap: var(--space-16); }
+.ticks { display: flex; justify-content: space-between; font-size: var(--fs-caption); font-weight: var(--fw-medium); color: var(--text-muted); }
+.row { display: grid; grid-template-columns: var(--name-w) 1fr var(--val-w); gap: var(--space-16); align-items: center; padding: var(--space-4) 0; border-radius: var(--radius-sm); cursor: pointer; transition: background-color var(--dur-fast); }
+.row:hover { background: var(--bg-hover); }
+.name { display: flex; align-items: center; gap: var(--space-8); min-width: 0; font-size: var(--fs-label); font-weight: var(--fw-medium); }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.track { position: relative; height: 16px; border-radius: 4px; background: var(--bg-inset); }
+.gridline { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--border-subtle); }
+.bar { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; opacity: 0.85; transition: width var(--dur-chart) var(--ease-out), opacity var(--dur-fast), box-shadow var(--dur-fast); }
+.row:hover .bar { opacity: 1; box-shadow: 0 0 0 1.5px var(--text-primary); }
+.failed { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: var(--fs-caption); font-weight: var(--fw-medium); color: var(--accent-danger); }
+.value { display: flex; justify-content: flex-end; align-items: baseline; gap: var(--space-8); white-space: nowrap; }
+.pct { font-size: var(--fs-label); font-weight: var(--fw-medium); font-variant-numeric: tabular-nums; }
+.mb { font-size: var(--fs-small); color: var(--text-muted); font-variant-numeric: tabular-nums; }

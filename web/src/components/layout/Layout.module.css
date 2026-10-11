@@ -1,0 +1,29 @@
+.shell { display: flex; height: 100vh; width: 100vw; overflow: hidden; background: var(--bg-app); }
+.side { flex: none; height: 100%; background: var(--bg-app); border-right: 1px solid var(--border-subtle); position: relative; z-index: 2; }
+.sideClip { height: 100%; overflow: hidden; }
+.sideInner { height: 100%; display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-16); width: var(--side-w, var(--size-sidepanel-w)); }
+.railInner { height: 100%; display: flex; flex-direction: column; align-items: center; gap: var(--space-8); padding: var(--space-16) var(--space-12); width: var(--size-rail-w); }
+.railList { display: flex; flex-direction: column; gap: var(--space-8); overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+.divider { width: 40px; height: 1px; background: var(--border-subtle); flex: none; }
+.header { display: flex; align-items: center; gap: var(--space-12); flex: none; }
+.headerTitle { font-size: var(--fs-title); font-weight: var(--fw-semibold); color: var(--text-primary); }
+.spacer { flex: 1; }
+.scroll { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; margin: 0 calc(-1 * var(--space-8)); padding: 0 var(--space-8); }
+.list { display: flex; flex-direction: column; gap: var(--space-4); }
+.footer { display: flex; align-items: center; gap: var(--space-12); padding-top: var(--space-12); border-top: 1px solid var(--border-subtle); flex: none; }
+.version { font-size: var(--fs-caption); color: var(--text-muted); font-weight: var(--fw-medium); }
+.library { background: var(--bg-panel); border-radius: var(--radius-md); padding: var(--space-12) var(--space-16); display: flex; flex-direction: column; gap: var(--space-8); flex: none; }
+.libRow { display: flex; align-items: center; gap: var(--space-8); }
+.empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-12); text-align: center; color: var(--text-muted); }
+.emptyBadge { width: 72px; height: 72px; border-radius: 50%; background: var(--bg-panel); display: grid; place-items: center; }
+.noMatch { padding: var(--space-24) 0; text-align: center; color: var(--text-muted); font-size: var(--fs-body); }
+
+.main { flex: 1; min-width: 0; display: flex; height: 100%; }
+.workspace { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bg-panel); }
+.topbar { display: flex; align-items: stretch; gap: var(--space-16); padding: var(--space-8) var(--space-24) 0; height: var(--size-topbar-h); background: var(--bg-app); border-bottom: 1px solid var(--border-subtle); flex: none; }
+.topActions { display: flex; align-items: center; gap: var(--space-8); padding-bottom: var(--space-8); margin-left: auto; }
+.content { flex: 1; min-height: 0; overflow: auto; padding: var(--space-24); display: flex; flex-direction: column; gap: var(--space-16); }
+.pageHeader { display: flex; align-items: center; gap: var(--space-12); flex: none; flex-wrap: wrap; }
+.pageTitle { font-size: var(--fs-title); font-weight: var(--fw-semibold); line-height: 1.2; }
+/* optically centred on the title's x-height (lowercase body), not on its line box */
+.pageSub { font-size: var(--fs-body); color: var(--text-muted); line-height: 1; position: relative; top: 0.28em; }

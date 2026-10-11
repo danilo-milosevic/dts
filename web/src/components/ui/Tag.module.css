@@ -1,0 +1,9 @@
+.tag {
+  display: inline-flex; align-items: center; gap: var(--space-4); height: 20px; padding: 0 var(--space-8); border-radius: var(--radius-xl);
+  border: 1px solid var(--tone); color: var(--tone); font-size: var(--fs-caption); font-weight: var(--fw-medium); letter-spacing: var(--letter-spacing-caption);
+  text-transform: uppercase; white-space: nowrap; flex: none; transition: color var(--dur-base), border-color var(--dur-base), background-color var(--dur-base);
+}
+.solid { background: var(--tone); color: var(--text-on-strong); }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.pulse .dot { animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.25; } }

@@ -1,0 +1,2 @@
+// The log feature was removed. This file is empty and safe to delete.
+export {};

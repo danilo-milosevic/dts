@@ -1,0 +1,14 @@
+.label { display: inline-flex; align-items: center; gap: var(--space-8); cursor: pointer; font-size: var(--fs-body); color: var(--text-primary); }
+.box {
+  width: 18px; height: 18px; flex: none; border-radius: 4px; display: grid; place-items: center; border: 1.5px solid var(--border-default); color: var(--text-on-accent);
+  transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+.box svg { transform: scale(0); transition: transform var(--dur-base) var(--ease-spring); }
+.label:hover .box { border-color: var(--accent-primary); }
+.checked .box { background: var(--accent-primary); border-color: var(--accent-primary); }
+.checked .box svg { transform: scale(1); }
+.radio .box { border-radius: 50%; color: var(--accent-primary); }
+.radio .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-primary); transform: scale(0); transition: transform var(--dur-base) var(--ease-spring); }
+.radio.checked .box { background: transparent; }
+.radio.checked .dot { transform: scale(1); }
+.hidden { position: absolute; opacity: 0; width: 0; height: 0; }

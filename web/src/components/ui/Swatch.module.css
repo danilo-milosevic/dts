@@ -1,0 +1,6 @@
+.row { display: flex; gap: var(--space-8); }
+.sw { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; border: 2px solid transparent; transition: border-color var(--dur-fast), transform var(--dur-fast) var(--ease-spring); }
+.sw:hover { transform: scale(1.1); }
+.sw[aria-checked='true'] { border-color: var(--text-primary); }
+.dot { width: 22px; height: 22px; border-radius: 50%; transition: width var(--dur-base) var(--ease-spring), height var(--dur-base) var(--ease-spring); }
+.sw[aria-checked='true'] .dot { width: 14px; height: 14px; }

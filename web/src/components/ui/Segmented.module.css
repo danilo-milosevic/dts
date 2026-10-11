@@ -1,0 +1,16 @@
+.root { display: inline-flex; padding: 2px; gap: 2px; background: var(--bg-inset); border-radius: var(--radius-sm); flex: none; }
+.full { display: flex; width: 100%; }
+.full .item { flex: 1; }
+.item {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-4);
+  height: calc(var(--size-control-h-sm)); padding: 0 var(--space-12); border-radius: calc(var(--radius-sm) - 1px);
+  font-size: var(--fs-label); font-weight: var(--fw-medium); color: var(--text-muted); white-space: nowrap; transition: color var(--dur-fast) var(--ease-out);
+}
+.item:hover { color: var(--text-secondary); }
+.item[aria-checked='true'] { color: var(--text-primary); }
+.item[aria-checked='true'] .icon { color: var(--accent-primary); }
+.indicator { position: absolute; inset: 0; background: var(--bg-card); border-radius: inherit; box-shadow: var(--shadow-sm); z-index: 0; }
+.content { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: var(--space-4); }
+.s .item { height: 24px; padding: 0 var(--space-8); font-size: var(--fs-caption); }
+.item:disabled { opacity: 0.4; cursor: not-allowed; }
+.item:disabled:hover { color: var(--text-muted); }

@@ -1,0 +1,30 @@
+.wrap { position: relative; width: 100%; min-width: 0; }
+.svg { display: block; overflow: visible; }
+.grid line { stroke: var(--border-subtle); shape-rendering: crispEdges; }
+.grid .base { stroke: var(--border-default); }
+.tick { fill: var(--text-muted); font-size: var(--fs-small); font-family: var(--font-family); }
+.axisTitle { fill: var(--text-muted); font-size: var(--fs-caption); font-weight: var(--fw-medium); letter-spacing: var(--letter-spacing-caption); text-transform: uppercase; }
+.dot { transition: transform var(--dur-slow) var(--ease-out), opacity var(--dur-base); }
+.dot circle { stroke: var(--bg-card); stroke-width: 2; transition: r var(--dur-fast) var(--ease-spring); animation: pop var(--dur-chart) var(--ease-spring) both; }
+.dot .halo { stroke: none; opacity: 0.22; animation: none; }
+@keyframes pop { from { r: 0; } }
+.line { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; transition: opacity var(--dur-base); }
+.draw { stroke-dasharray: var(--len) var(--len); animation: draw var(--dur-chart) var(--ease-out) both; }
+@keyframes draw { from { stroke-dashoffset: var(--len); } to { stroke-dashoffset: 0; } }
+.area { opacity: 0.12; transition: opacity var(--dur-base); animation: fade var(--dur-chart) var(--ease-out) both; }
+@keyframes fade { from { opacity: 0; } }
+.fit { fill: none; stroke-width: 1.5; stroke-dasharray: 6 6; opacity: 0.7; transition: opacity var(--dur-base); }
+.cross { stroke: var(--text-muted); stroke-dasharray: 3 4; pointer-events: none; }
+.hidden { opacity: 0 !important; pointer-events: none; }
+.ref { stroke: var(--accent-success); stroke-width: 1.5; stroke-dasharray: 6 5; }
+.refLabel { fill: var(--accent-success); font-size: var(--fs-caption); font-weight: var(--fw-medium); }
+.marker { stroke: var(--text-muted); stroke-dasharray: 3 4; }
+.markerLabel { fill: var(--text-muted); font-size: var(--fs-caption); font-weight: var(--fw-medium); }
+.handle { cursor: ew-resize; }
+.handle rect { fill: var(--bg-panel); stroke: var(--border-default); }
+.handle:hover rect { stroke: var(--accent-primary); }
+.handleText { fill: var(--text-primary); font-size: var(--fs-caption); font-weight: var(--fw-medium); pointer-events: none; }
+.overview { position: relative; height: 44px; border-radius: 6px; background: var(--bg-inset); overflow: hidden; margin-top: var(--space-12); }
+.overview :global(.selection) { fill: var(--accent-primary); fill-opacity: 0.14; stroke: none; }
+.overview :global(.handle) { fill: var(--accent-primary); }
+.overviewLabel { position: absolute; top: 50%; transform: translateY(-50%); font-size: var(--fs-caption); font-weight: var(--fw-medium); letter-spacing: var(--letter-spacing-caption); color: var(--text-muted); pointer-events: none; }

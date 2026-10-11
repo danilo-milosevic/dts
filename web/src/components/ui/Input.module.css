@@ -1,0 +1,13 @@
+.wrap {
+  display: flex; align-items: center; gap: var(--space-8); height: var(--size-control-h); padding: 0 var(--space-12);
+  border-radius: var(--radius-sm); background: var(--bg-inset); border: 1px solid var(--border-subtle); color: var(--text-muted);
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), color var(--dur-fast);
+}
+.wrap:hover { border-color: var(--border-default); }
+.wrap:focus-within { border-color: var(--accent-primary); box-shadow: 0 0 0 1px var(--accent-primary); color: var(--accent-primary); }
+.input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; color: var(--text-primary); font-size: var(--fs-body); }
+.input::placeholder { color: var(--text-muted); }
+.clear { color: var(--text-muted); display: grid; place-items: center; border-radius: 50%; }
+.clear:hover { color: var(--text-primary); }
+/* the wrapper shows the focus state; suppress the global focus ring on the inner field */
+.input:focus, .input:focus-visible { outline: none; box-shadow: none; }

@@ -1,0 +1,5 @@
+.bar { display: flex; align-items: center; gap: var(--space-16); padding: var(--space-12) var(--space-24); background: var(--bg-app); border-top: 1px solid var(--border-subtle); flex: none; }
+.controls { display: flex; align-items: center; gap: var(--space-4); }
+.tc { display: flex; gap: var(--space-4); font-size: var(--fs-numeric); font-weight: var(--fw-medium); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.total { color: var(--text-muted); }
+.vol { display: flex; align-items: center; gap: var(--space-8); color: var(--text-muted); }

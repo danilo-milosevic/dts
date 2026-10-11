@@ -1,0 +1,79 @@
+/* Global base styles. Every value comes from a token (see src/theme/tokens.ts). */
+@import '@fontsource/barlow-condensed/400.css';
+@import '@fontsource/barlow-condensed/500.css';
+@import '@fontsource/barlow-condensed/600.css';
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--fs-body);
+  line-height: var(--line-height);
+  color: var(--text-primary);
+  background: var(--bg-app);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: 0; padding: 0; }
+:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
+
+/* Text styles (Figma text styles) */
+.t-display { font-size: var(--fs-display); font-weight: var(--fw-semibold); }
+.t-title { font-size: var(--fs-title); font-weight: var(--fw-semibold); }
+.t-heading { font-size: var(--fs-heading); font-weight: var(--fw-medium); }
+.t-subheading { font-size: var(--fs-subheading); font-weight: var(--fw-medium); }
+.t-body { font-size: var(--fs-body); font-weight: var(--fw-regular); }
+.t-small { font-size: var(--fs-small); font-weight: var(--fw-regular); }
+.t-label { font-size: var(--fs-label); font-weight: var(--fw-medium); }
+.t-caption { font-size: var(--fs-caption); font-weight: var(--fw-medium); letter-spacing: var(--letter-spacing-caption); }
+.t-numeric { font-size: var(--fs-numeric); font-weight: var(--fw-medium); font-variant-numeric: tabular-nums; }
+.t-upper { text-transform: uppercase; }
+.c-primary { color: var(--text-primary); }
+.c-secondary { color: var(--text-secondary); }
+.c-muted { color: var(--text-muted); }
+.c-accent { color: var(--accent-primary); }
+.c-dts { color: var(--accent-dts); }
+.c-danger { color: var(--accent-danger); }
+.c-success { color: var(--accent-success); }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.grow { flex: 1 1 auto; min-width: 0; }
+.row { display: flex; align-items: center; gap: var(--space-12); }
+.col { display: flex; flex-direction: column; gap: var(--space-8); }
+
+/* Scrollbars */
+* { scrollbar-width: thin; scrollbar-color: var(--border-default) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 10px; border: 3px solid transparent; background-clip: content-box; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+/* Theme change — fallback when the View Transitions API is not available */
+html.theme-animating, html.theme-animating *, html.theme-animating *::before, html.theme-animating *::after {
+  transition: background-color var(--dur-theme) var(--ease-in-out), color var(--dur-theme) var(--ease-in-out),
+    border-color var(--dur-theme) var(--ease-in-out), fill var(--dur-theme) var(--ease-in-out),
+    stroke var(--dur-theme) var(--ease-in-out), box-shadow var(--dur-theme) var(--ease-in-out) !important;
+}
+/* Theme change — circular reveal from the toggle that was clicked */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+::view-transition-new(root) { animation: theme-reveal var(--dur-theme) var(--ease-in-out); }
+@keyframes theme-reveal {
+  from { clip-path: circle(0 at var(--reveal-x, 50%) var(--reveal-y, 50%)); }
+  to { clip-path: circle(var(--reveal-r, 150%) at var(--reveal-x, 50%) var(--reveal-y, 50%)); }
+}
+
+html[data-motion='off'] *, html[data-motion='off'] *::before, html[data-motion='off'] *::after {
+  animation-duration: 0ms !important; transition-duration: 0ms !important;
+}
+
+@keyframes shimmer { from { background-position: -400px 0; } to { background-position: 400px 0; } }
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-inset) 0%, var(--bg-hover) 50%, var(--bg-inset) 100%);
+  background-size: 800px 100%; animation: shimmer 1.4s linear infinite; border-radius: var(--radius-md);
+}
+
+/* Panel resizing — keep the resize cursor everywhere and stop text selection while dragging */
+html.is-resizing, html.is-resizing * { cursor: col-resize !important; user-select: none !important; }
+@keyframes fade-in { from { opacity: 0.35; } to { opacity: 1; } }
+.fade-in { animation: fade-in var(--dur-base) var(--ease-out) both; }

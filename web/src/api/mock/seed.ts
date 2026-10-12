@@ -9,7 +9,6 @@ export const defaultSettings: EncodeSettings = {
   layout: '2.0',
   downmix: 'loro',
   generateLfe: false,
-  dialnormDb: -27,
   drc: 'film-standard',
   limiter: true,
   container: 'dts',

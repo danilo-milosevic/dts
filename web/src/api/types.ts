@@ -24,7 +24,11 @@ export interface Track {
   status: TrackStatus;
   createdAt: string;
   /** Present once encoded. */
-  output?: { fileName: string; sizeBytes: number; codec: Codec; bitrateKbps: number; encodeSeconds: number; channels?: number; sampleRate?: number };
+  output?: {
+    fileName: string; sizeBytes: number; codec: Codec; bitrateKbps: number; encodeSeconds: number; channels?: number; sampleRate?: number;
+    /** The DTS file decoded back to WAV after encoding (decompression): time taken and WAV size. Null if decoding failed. */
+    decodeSeconds?: number | null; decodedBytes?: number | null;
+  };
   error?: string;
   /** Per-track encoder settings (last used). */
   settings: EncodeSettings;
@@ -40,7 +44,6 @@ export interface EncodeSettings {
   layout: '1.0' | '2.0' | '5.1' | '7.1' | 'auto';
   downmix: 'loro' | 'ltrt' | 'none';
   generateLfe: boolean;
-  dialnormDb: number; // −31 … −1
   drc: 'none' | 'film-light' | 'film-standard' | 'music-light' | 'music-standard' | 'speech';
   limiter: boolean;
   container: 'dts' | 'wav';
@@ -65,6 +68,9 @@ export interface Job {
   outputBytes: number | null;
   ratio: number | null;
   encodeSeconds: number | null;
+  /** Decoding the DTS result back to WAV (filled when done). */
+  decodeSeconds?: number | null;
+  decodedBytes?: number | null;
   createdAt: string;
   startedAt: string | null;
   finishedAt: string | null;
@@ -80,7 +86,7 @@ export interface QueueState { running: boolean; workers: number; maxWorkers: num
 export interface EncodeSample { file: string; layout: LayoutGroup; inputMB: number; seconds: number; }
 export interface CompareStats {
   encodes: EncodeSample[];
-  sessionFiles: { trackId: string; file: string; layout: LayoutGroup; inputMB: number; outputMB: number | null; status: 'done' | 'failed'; reason?: string; durationSec: number; encodeSeconds: number | null }[];
+  sessionFiles: { trackId: string; file: string; layout: LayoutGroup; inputMB: number; outputMB: number | null; status: 'done' | 'failed'; reason?: string; durationSec: number; encodeSeconds: number | null; decodeSeconds?: number | null; decodedMB?: number | null }[];
 }
 
 export interface AppSettingsDto { outputDevice: string; bufferSize: number; previewAfterEncode: boolean; defaults: EncodeSettings; }

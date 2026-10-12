@@ -160,10 +160,18 @@ def plan_encode(ffmpeg: str, src: Path, out: Path, track: dict[str, Any], s: dic
     return EncodePlan(args=args, channels=ch, sample_rate=sr, kbps=kbps, notes=notes)
 
 
-def make_preview(ffmpeg: str, encoded: Path, preview: Path) -> None:
-    """Decode the DTS output to FLAC so the browser can play it for A/B (browsers cannot decode DTS)."""
-    r = _run([ffmpeg, "-hide_banner", "-nostdin", "-y", "-loglevel", "error", "-i", str(encoded), "-c:a", "flac", "-compression_level", "1", str(preview)])
-    if r.returncode != 0:
+def pcm_codec(track: dict[str, Any]) -> str:
+    """PCM format matching the source WAV, so decoded and original sizes compare like for like."""
+    if track.get("floatingPoint"):
+        return "pcm_f32le"
+    return {16: "pcm_s16le", 24: "pcm_s24le"}.get(int(track.get("bitDepth") or 24), "pcm_s32le")
+
+
+def decode_to_wav(ffmpeg: str, encoded: Path, dest: Path, codec: str = "pcm_s24le") -> None:
+    """Decode a DTS file back to a PCM WAV (decompression step; also what the browser plays for A/B)."""
+    r = _run([ffmpeg, "-hide_banner", "-nostdin", "-y", "-loglevel", "error", "-i", str(encoded), "-map", "0:a:0", "-c:a", codec, "-f", "wav", str(dest)])
+    if r.returncode != 0 or not dest.exists():
+        dest.unlink(missing_ok=True)
         raise MediaError(r.stderr.decode(errors="replace").strip() or "could not decode the DTS output")
 
 

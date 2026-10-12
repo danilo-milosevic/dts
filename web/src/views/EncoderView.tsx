@@ -5,7 +5,8 @@ import { useData, selectedTrack } from '@/store/data';
 import { useUi } from '@/store/ui';
 import { useSettings } from '@/store/settings';
 import { engine, usePlayer } from '@/audio/engine';
-import { api } from '@/api/client';
+import { api, USE_MOCKS } from '@/api/client';
+import type { SaveResult } from '@/lib/save';
 import { useTrackAudio } from '@/hooks/useTrackAudio';
 import { useMotion } from '@/hooks/useMotion';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
@@ -57,6 +58,12 @@ export function EncoderView() {
   const status = track?.status;
   useEffect(() => { if (status === 'encoded' && previewAfter && output) engine.setWhich('dts'); }, [status, previewAfter, output]);
 
+  /** Run a save (Save-as dialog where supported) and report the result. Mock mode has no files to save. */
+  const save = (run: () => Promise<SaveResult>) => {
+    if (USE_MOCKS) { toast({ tone: 'info', title: 'Mock mode', message: 'Downloads need the encoder server.' }); return; }
+    run().then(r => r.status !== 'cancelled' && toast({ tone: 'success', title: r.status === 'saved' ? `Saved ${r.name}` : `Downloading ${r.name}` }))
+      .catch(e => toast({ tone: 'error', title: 'Download failed', message: String(e) }));
+  };
   if (ready && !tracks) return <ImportView />;
   if (!track) return <Workspace><div className={s.empty}>Select a track</div></Workspace>;
 
@@ -97,8 +104,6 @@ export function EncoderView() {
                 <Stat label="Channels" value={`${track.channels} · ${track.layout}`} />
                 <Stat label="Duration" value={fmtTime(track.durationSec, true)} />
                 <Stat label="Bitrate" value={`${track.bitrateKbps} kbps`} />
-                <Stat label="Peak" value={`${track.peakDbfs > 0 ? '+' : ''}${track.peakDbfs} dBFS`} tone={track.peakDbfs > 0 ? 'danger' : undefined} />
-                <Stat label="Loudness" value={`${track.loudnessLufs} LUFS`} />
               </div>
               {view === 'spectrogram' && <StftToolbar />}
               <Lanes track={track} buffer={source} tone="source" which="source" view={view} mono={mono} />
@@ -116,7 +121,8 @@ export function EncoderView() {
                 <span style={{ flex: 1 }} />
                 {view === 'spectrogram' && <Segmented value={outputView} onChange={v => setUi({ outputView: v })} options={[{ value: 'output', label: 'Output' }, { value: 'difference', label: 'Difference' }]} />}
                 <Button size="s" icon="headphones" disabled={!output} onClick={() => { engine.setWhich(usePlayer.getState().which === 'dts' ? 'source' : 'dts'); if (!usePlayer.getState().playing) engine.play(); }}>A/B compare</Button>
-                <Button size="s" icon="download" disabled={!encoded} onClick={() => { if (!api.tracks.downloadOutput(track)) toast({ tone: 'success', title: 'Exported', message: `${st.outputFolder}/${outName}` }); }}>Download</Button>
+                <Button size="s" icon="download" disabled={!encoded} onClick={() => save(() => api.tracks.saveOutput(track))}>Download DTS</Button>
+                <Button size="s" icon="download" disabled={!encoded || !track.output?.decodedBytes} onClick={() => save(() => api.tracks.saveDecoded(track))}>Decoded WAV</Button>
               </div>
               <div className={s.meta}>
                 <Stat label="Codec" value={CODEC_LABEL} tone="dts" />
@@ -125,7 +131,9 @@ export function EncoderView() {
                 <Stat label="Layout" value={st.layout === 'auto' ? track.layout : st.layout === '1.0' ? 'Mono' : st.layout} />
                 <Stat label={encoded ? 'Size' : 'Est. size'} value={fmtMB(encoded ? track.output!.sizeBytes : est.bytes)} tone="dts" />
                 <Stat label="Ratio" value={`×${(encoded ? track.sizeBytes / track.output!.sizeBytes : est.ratio).toFixed(2)}`} tone="dts" />
-                <Stat label="Encode time" value={`≈ ${fmtDuration(encoded ? track.output!.encodeSeconds : est.encodeSec)}`} />
+                <Stat label="Encode time" value={encoded ? fmtDuration(track.output!.encodeSeconds) : `≈ ${fmtDuration(est.encodeSec)}`} />
+                {encoded && track.output!.decodeSeconds != null && <Stat label="Decode time" value={fmtDuration(track.output!.decodeSeconds)} />}
+                {encoded && track.output!.decodedBytes != null && <Stat label="Decoded WAV" value={fmtMB(track.output!.decodedBytes)} />}
                 <Stat label="Bandwidth" value={`${st.bitrateKbps >= 1500 ? 20 : st.bitrateKbps >= 768 ? 16 : 12} kHz`} tone={st.bitrateKbps < 768 ? 'warning' : undefined} />
               </div>
               <Lanes track={track} buffer={output} compare={view === 'spectrogram' && outputView === 'difference' ? source : undefined} tone="dts" which="dts" view={view} mix mono={mono} />

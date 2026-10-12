@@ -6,7 +6,6 @@ import { Field, Section } from '@/components/ui/Field';
 import { Select } from '@/components/ui/Select';
 import { Segmented } from '@/components/ui/Segmented';
 import { Toggle } from '@/components/ui/Toggle';
-import { Slider } from '@/components/ui/Slider';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Input } from '@/components/ui/Input';
 import { Stat } from '@/components/ui/Stat';
@@ -15,6 +14,7 @@ import { IconButton } from '@/components/ui/IconButton';
 import { Menu } from '@/components/ui/Menu';
 import { CODEC_LABEL, estimateOutput, fmtDuration, fmtMB, layoutChannels } from '@/lib/format';
 import { Tag } from '@/components/ui/Tag';
+import { optionHelp } from './optionHelp';
 import { bitrateOptions, containerOptions, downmixOptions, drcOptions } from './inspectorOptions';
 import s from './Encoder.module.css';
 
@@ -59,16 +59,12 @@ export function Inspector({ track, onClose }: { track: Track; onClose?: () => vo
         </Section>
         <Section title="Channels">
           <Field label="Layout"><Segmented value={st.layout} onChange={v => up({ layout: v })} options={[{ value: '1.0', label: 'Mono' }, { value: '2.0', label: '2.0' }, { value: '5.1', label: '5.1' }, { value: '7.1', label: '7.1', title: caps?.layoutNotes['7.1'] }, { value: 'auto', label: 'Auto' }]} /></Field>
-          <Field label="Downmix" hint={track.channels > 2 ? undefined : 'Only for multichannel sources'}><Select width={W} disabled={track.channels <= 2 && st.layout !== '2.0'} value={st.downmix} options={downmixOptions} onChange={v => up({ downmix: v })} /></Field>
-          <Field label="Generate LFE" hint="80 Hz low-pass from L/R"><Toggle checked={st.generateLfe} onChange={v => up({ generateLfe: v })} label="Generate LFE" /></Field>
+          <Field label="Downmix" info={optionHelp.downmix} hint={track.channels > 2 ? undefined : 'Only for multichannel sources'}><Select width={W} disabled={track.channels <= 2 && st.layout !== '2.0'} value={st.downmix} options={downmixOptions} onChange={v => up({ downmix: v })} /></Field>
+          <Field label="Generate LFE" info={optionHelp.generateLfe} hint="Stereo → 5.1 only"><Toggle checked={st.generateLfe} onChange={v => up({ generateLfe: v })} label="Generate LFE" /></Field>
         </Section>
         <Section title="Loudness & dynamics">
-          <div className={s.sliderRow}>
-            <div className={s.sliderTop}><span className="t-label">Dialog normalization</span><span className="t-caption c-accent">{st.dialnormDb} dB</span></div>
-            <Slider label="Dialog normalization" min={-31} max={-1} value={st.dialnormDb} onChange={v => up({ dialnormDb: v })} />
-          </div>
-          <Field label="Dynamic range"><Select width={W} value={st.drc} options={drcOptions} onChange={v => up({ drc: v })} /></Field>
-          <Field label="True-peak limiter" hint={track.peakDbfs > 0 ? `Source peaks at +${track.peakDbfs} dBFS — keep on` : 'Ceiling −1.0 dBTP'}><Toggle checked={st.limiter} onChange={v => up({ limiter: v })} label="True-peak limiter" /></Field>
+          <Field label="Dynamic range" info={optionHelp.drc}><Select width={W} value={st.drc} options={drcOptions} onChange={v => up({ drc: v })} /></Field>
+          <Field label="True-peak limiter" info={optionHelp.limiter} hint={track.peakDbfs > 0 ? `Source peaks at +${track.peakDbfs} dBFS — keep on` : 'Ceiling −1.0 dBTP'}><Toggle checked={st.limiter} onChange={v => up({ limiter: v })} label="True-peak limiter" /></Field>
         </Section>
         <Section title="Output">
           <Field label="Container"><Select width={W} value={st.container} options={containerOptions} onChange={v => up({ container: v })} /></Field>

@@ -15,7 +15,7 @@ All bodies are JSON unless noted. Types are in `src/api/types.ts` (`Track`, `Enc
 | POST | `/api/tracks/:id/duplicate` | — | `Track` |
 | GET | `/api/tracks/:id/audio` | — | the uploaded WAV, for playback and the waveform |
 | GET | `/api/tracks/:id/output` | — | download the encoded file (`Content-Disposition: attachment`) — encoded tracks only |
-| GET | `/api/tracks/:id/output/audio` | — | the DTS output decoded to FLAC (browsers cannot play DTS), for A/B — encoded tracks only |
+| GET | `/api/tracks/:id/output/audio` | — | the DTS output decoded back to WAV (made right after encoding), for A/B; `?download=1` saves it as `<name>.decoded.wav` — encoded tracks only |
 | GET | `/api/tracks/:id/stft` | query, see below | spectrogram (binary) |
 
 ### STFT
@@ -43,7 +43,7 @@ Computed on the server and already binned to the `cols × rows` pixel grid (at m
 
 `EncodeSettings.layout` can be `'1.0'` (mono downmix), `'2.0'`, `'5.1'`, `'7.1'` or `'auto'`.
 
-Job lifecycle: `queued → encoding → done | failed`. Cancelling removes the job. While encoding, the server updates `progress` (0–1, from ffmpeg's `-progress` output) and `etaSec`; on `done` it fills `outputBytes`, `ratio`, `encodeSeconds`, `notes` (adjustments such as resampling or a bitrate clamp) and sets the track's `status: 'encoded'` and `output` (incl. the real `bitrateKbps`, `channels`, `sampleRate`). On failure it sets `error` (ffmpeg's message) and the track's `status: 'error'`.
+Job lifecycle: `queued → encoding → done | failed`. Each job encodes WAV → DTS and then decodes the DTS back to WAV (`progress` 0–0.9 is the encode, the rest the decode), timing both: `encodeSeconds` / `outputBytes` and `decodeSeconds` / `decodedBytes` (also on `Track.output`), for comparing compression and decompression. Cancelling removes the job. While encoding, the server updates `progress` (0–1, from ffmpeg's `-progress` output) and `etaSec`; on `done` it fills `outputBytes`, `ratio`, `encodeSeconds`, `notes` (adjustments such as resampling or a bitrate clamp) and sets the track's `status: 'encoded'` and `output` (incl. the real `bitrateKbps`, `channels`, `sampleRate`). On failure it sets `error` (ffmpeg's message) and the track's `status: 'error'`.
 
 **Progress updates are polled, not pushed.** The client polls `GET /api/jobs` (+ `/api/tracks`) every 500 ms only while a job is queued or encoding, and stops when the queue is idle. For one user on a local server that costs nothing and needs no extra connection type; if push is ever needed, a Server-Sent Events endpoint can replace the poll without changing the job model.
 
@@ -52,7 +52,7 @@ Job lifecycle: `queued → encoding → done | failed`. Cancelling removes the j
 |---|---|---|---|
 
 - `encodes`: every finished encode `{ file, layout, inputMB, seconds }` (history + session) — scatter chart. `layout` is the output channel group: `mono`, `stereo` or `surround`.
-- `sessionFiles`: per-file result for this session `{ trackId, file, layout, inputMB, outputMB | null, status, reason?, durationSec, encodeSeconds }`.
+- `sessionFiles`: per-file result for this session `{ trackId, file, layout, inputMB, outputMB | null, status, reason?, durationSec, encodeSeconds, decodeSeconds, decodedMB }`.
 
 ## Capabilities
 | GET | `/api/capabilities` | — | `Capabilities` — containers and layouts, bitrate limits per output channel count, notes for adapted layouts |

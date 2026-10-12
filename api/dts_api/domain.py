@@ -37,7 +37,6 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "layout": "2.0",
     "downmix": "loro",
     "generateLfe": False,
-    "dialnormDb": -27,
     "drc": "none",
     "limiter": True,
     "container": "dts",
@@ -95,8 +94,8 @@ def preset_label(s: dict[str, Any]) -> str:
 
 
 def merge_settings(base: dict[str, Any], patch: dict[str, Any] | None) -> dict[str, Any]:
-    """Apply a partial EncodeSettings, ignoring unknown keys."""
-    out = dict(base)
+    """Apply a partial EncodeSettings, ignoring unknown keys (and dropping retired ones such as dialnormDb)."""
+    out = {k: v for k, v in base.items() if k in DEFAULT_SETTINGS}
     for k, v in (patch or {}).items():
         if k in DEFAULT_SETTINGS:
             out[k] = v

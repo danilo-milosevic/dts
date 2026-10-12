@@ -165,7 +165,7 @@ def delete_track(id: str):
 @bp.post("/tracks/<id>/duplicate")
 def duplicate_track(id: str):
     t = track_or_404(id)
-    copy = {k: v for k, v in t.items() if k not in ("output", "error", "_output", "_preview")}
+    copy = {k: v for k, v in t.items() if k not in ("output", "error", "_output", "_decoded", "_preview")}
     copy.update(id=d.uid("trk"), name=unique_name(re.sub(r"(\.\w+)$", r" copy\1", t["name"])), status="raw", createdAt=d.now())
     store().put("tracks", copy, pos=store().pos("tracks", id) - 0.001)  # right below the original
     return jsonify(public(copy)), 201
@@ -196,10 +196,18 @@ def track_output(id: str):
 
 @bp.get("/tracks/<id>/output/audio")
 def track_output_audio(id: str):
-    """Decoded DTS output (FLAC) for the A/B preview."""
+    """The DTS output decoded back to WAV: played for A/B; ?download=1 saves it as <name>.decoded.wav."""
     t = track_or_404(id)
-    p = _output_path(t, "_preview")
-    return send_file(p, mimetype="audio/flac", conditional=True, max_age=3600)
+    p = _output_path(t, decoded_key(t))
+    if request.args.get("download"):
+        name = re.sub(r"(\.dts)?\.(wav|dts)$", "", t["output"]["fileName"], flags=re.I) + ".decoded.wav"
+        return send_file(p, mimetype="audio/wav", as_attachment=True, download_name=name, conditional=True)
+    return send_file(p, mimetype="audio/flac" if p.suffix == ".flac" else "audio/wav", conditional=True, max_age=3600)
+
+
+def decoded_key(t: dict[str, Any]) -> str:
+    """Decoded WAV (tracks encoded before decoding was timed have a FLAC preview instead)."""
+    return "_decoded" if t.get("_decoded") else "_preview"
 
 
 @bp.get("/tracks/<id>/stft")
@@ -207,7 +215,7 @@ def track_stft(id: str):
     """STFT spectrogram binned to cols × rows. Body: float32 little-endian dB values, row-major, top row = highest frequency."""
     t = track_or_404(id)
     which = request.args.get("which", "source")
-    path = storage() / t["_source"] if which == "source" else _output_path(t, "_preview" if t.get("_preview") else "_output")
+    path = storage() / t["_source"] if which == "source" else _output_path(t, decoded_key(t) if t.get("_decoded") or t.get("_preview") else "_output")
     a = request.args
 
     def num(key: str, default: float, lo: float, hi: float) -> float:
@@ -415,6 +423,7 @@ def compare_stats():
     session = [{"trackId": j["trackId"], "file": j["trackName"], "layout": group(j), "inputMB": round(j["inputBytes"] / d.MB, 1),
                 "outputMB": round(j["outputBytes"] / d.MB, 2) if j.get("outputBytes") else None,
                 "status": "done" if j["status"] == "done" else "failed", **({"reason": j["error"]} if j.get("error") else {}),
-                "durationSec": tracks.get(j["trackId"], {}).get("durationSec", 0), "encodeSeconds": j.get("encodeSeconds")}
+                "durationSec": tracks.get(j["trackId"], {}).get("durationSec", 0), "encodeSeconds": j.get("encodeSeconds"),
+                "decodeSeconds": j.get("decodeSeconds"), "decodedMB": round(j["decodedBytes"] / d.MB, 2) if j.get("decodedBytes") else None}
                for j in jobs if not j.get("_cleared") and j["trackId"] in tracks]
     return jsonify({"encodes": encodes, "sessionFiles": session})

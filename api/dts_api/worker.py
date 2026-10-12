@@ -16,7 +16,7 @@ from typing import Any
 
 from .config import Config
 from .domain import now
-from .media import MediaError, make_preview, plan_encode
+from .media import MediaError, decode_to_wav, pcm_codec, plan_encode
 from .store import Store
 
 log = logging.getLogger(__name__)
@@ -148,12 +148,13 @@ class EncodeQueue:
                 key, _, value = line.strip().partition("=")
                 if key != "out_time_us" or not value.lstrip("-").isdigit():
                     continue
-                progress = min(0.97, max(0.0, int(value) / 1e6 / duration))  # the rest is the preview decode
+                progress = min(0.9, max(0.0, int(value) / 1e6 / duration) * 0.9)  # last 10 %: decoding back to WAV
                 if time.monotonic() - last_write > 0.25 and progress > 0:
                     elapsed = time.monotonic() - started
                     self.store.update("jobs", job["id"], progress=round(progress, 4), etaSec=round(elapsed / progress * (1 - progress), 1))
                     last_write = time.monotonic()
             code = proc.wait()
+        encode_seconds = round(time.monotonic() - started, 3)  # the encode alone
         with self.cond:
             self._procs.pop(job["id"], None)
             cancelled = job["id"] in self._cancelled
@@ -167,9 +168,10 @@ class EncodeQueue:
             msg = logfile.read_text(errors="replace").strip().splitlines()
             return self._fail(job["id"], (msg[-1] if msg else f"ffmpeg exited with code {code}")[:300])
 
-        # finished: move into place, decode a FLAC preview for A/B listening
+        # encoded: move into place, then decode the DTS back to WAV (timed — for the compression/decompression comparison;
+        # the decoded WAV is also what the browser plays for A/B)
         final = out_dir / job["outputName"]
-        preview = out_dir / "preview.flac"
+        decoded = out_dir / "decoded.wav"
         for old in out_dir.iterdir():  # one current output per track
             if old != tmp and not old.name.startswith("."):
                 try:
@@ -177,11 +179,16 @@ class EncodeQueue:
                 except OSError:  # Windows: still open (being downloaded / played) — overwritten below or left behind
                     log.warning("could not remove old output %s", old)
         shutil.move(str(tmp), final)
+        self.store.update("jobs", job["id"], progress=0.92, etaSec=None)
+        decode_seconds: float | None = None
+        decoded_bytes: int | None = None
         try:
-            make_preview(self.cfg.ffmpeg, final, preview)
+            t0 = time.monotonic()
+            decode_to_wav(self.cfg.ffmpeg, final, decoded, pcm_codec(track))
+            decode_seconds, decoded_bytes = round(time.monotonic() - t0, 3), decoded.stat().st_size
         except MediaError as e:
-            log.warning("preview for %s failed: %s", job["id"], e)
-        encode_seconds = round(time.monotonic() - started, 2)
+            log.warning("decode of %s failed: %s", job["id"], e)
+            plan.notes.append(f"decoding the DTS back to WAV failed: {e}")
         size = final.stat().st_size
 
         with self.store.tx():
@@ -191,14 +198,17 @@ class EncodeQueue:
                 return
             j.update(status="done", progress=1, etaSec=None, finishedAt=now(), outputBytes=size,
                      ratio=round(j["inputBytes"] / max(size, 1), 3), encodeSeconds=encode_seconds,
+                     decodeSeconds=decode_seconds, decodedBytes=decoded_bytes,
                      notes=plan.notes, effective={"channels": plan.channels, "sampleRate": plan.sample_rate, "bitrateKbps": plan.kbps})
             t.update(status="encoded", error=None,
                      output={"fileName": final.name, "sizeBytes": size, "codec": j["settings"]["codec"], "bitrateKbps": plan.kbps,
-                             "encodeSeconds": encode_seconds, "channels": plan.channels, "sampleRate": plan.sample_rate},
-                     _output=str(final.relative_to(storage)), _preview=str(preview.relative_to(storage)) if preview.exists() else None)
+                             "encodeSeconds": encode_seconds, "decodeSeconds": decode_seconds, "decodedBytes": decoded_bytes,
+                             "channels": plan.channels, "sampleRate": plan.sample_rate},
+                     _output=str(final.relative_to(storage)), _decoded=str(decoded.relative_to(storage)) if decoded_bytes else None)
+            t.pop("_preview", None)
             self.store.put("jobs", j)
             self.store.put("tracks", t)
-        log.info("encode %s done in %.1fs (%d bytes)", job["id"], encode_seconds, size)
+        log.info("encode %s: %.2fs → %d bytes; decode %s s → %s bytes", job["id"], encode_seconds, size, decode_seconds, decoded_bytes)
 
     def _fail(self, job_id: str, message: str) -> None:
         with self.store.tx():

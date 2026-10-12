@@ -52,8 +52,10 @@ setInterval(() => {
     if (j.progress >= 1) {
       const est = estimateOutput(t, j.settings);
       j.status = 'done'; j.etaSec = null; j.finishedAt = now(); j.outputBytes = Math.round(est.bytes); j.ratio = est.ratio; j.encodeSeconds = est.encodeSec;
+      // simulated decode back to WAV: ~1/6 of the encode time, PCM at the output layout
+      j.decodeSeconds = +(est.encodeSec / 6).toFixed(2); j.decodedBytes = Math.round((Math.min(t.sampleRate, 48000) * t.bitDepth * layoutChannels(j.settings.layout, t) * t.durationSec) / 8);
       t.status = 'encoded'; t.error = undefined;
-      t.output = { fileName: j.outputName, sizeBytes: j.outputBytes, codec: j.settings.codec, bitrateKbps: j.settings.bitrateKbps, encodeSeconds: est.encodeSec };
+      t.output = { fileName: j.outputName, sizeBytes: j.outputBytes, codec: j.settings.codec, bitrateKbps: j.settings.bitrateKbps, encodeSeconds: est.encodeSec, decodeSeconds: j.decodeSeconds, decodedBytes: j.decodedBytes };
     }
   }
 }, 200);
@@ -143,7 +145,7 @@ route('POST', '/api/queue/pause', () => { db.queue.running = false; return db.qu
 const groupOf = (j: Job) => { const t = db.tracks.find(x => x.id === j.trackId); return layoutGroupOf(t ? layoutChannels(j.settings.layout, t) : 2); };
 route('GET', '/api/stats/compare', () => {
   const done = db.jobs.filter(j => j.status === 'done' || j.status === 'failed');
-  const sessionFiles: CompareStats['sessionFiles'] = done.map(j => { const t = db.tracks.find(x => x.id === j.trackId); return { trackId: j.trackId, file: j.trackName, layout: groupOf(j), inputMB: +(j.inputBytes / MB).toFixed(1), outputMB: j.outputBytes ? +(j.outputBytes / MB).toFixed(2) : null, status: j.status === 'done' ? 'done' : 'failed', reason: j.error ?? undefined, durationSec: t?.durationSec ?? 0, encodeSeconds: j.encodeSeconds }; });
+  const sessionFiles: CompareStats['sessionFiles'] = done.map(j => { const t = db.tracks.find(x => x.id === j.trackId); return { trackId: j.trackId, file: j.trackName, layout: groupOf(j), inputMB: +(j.inputBytes / MB).toFixed(1), outputMB: j.outputBytes ? +(j.outputBytes / MB).toFixed(2) : null, status: j.status === 'done' ? 'done' : 'failed', reason: j.error ?? undefined, durationSec: t?.durationSec ?? 0, encodeSeconds: j.encodeSeconds, decodeSeconds: j.decodeSeconds ?? null, decodedMB: j.decodedBytes ? +(j.decodedBytes / MB).toFixed(2) : null }; });
   const encodes = [...historicalEncodes, ...done.filter(j => j.status === 'done').map(j => ({ file: j.trackName, layout: groupOf(j), inputMB: +(j.inputBytes / MB).toFixed(1), seconds: +(j.encodeSeconds ?? 0).toFixed(1) }))];
   return { encodes, sessionFiles } satisfies CompareStats;
 });

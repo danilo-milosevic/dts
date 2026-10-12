@@ -22,8 +22,6 @@
 .estimate { display: flex; justify-content: space-between; gap: var(--space-8); }
 .actions { display: flex; gap: var(--space-8); }
 .actions > :last-child { flex: 1; }
-.sliderRow { display: flex; flex-direction: column; gap: var(--space-8); padding: var(--space-4) 0; }
-.sliderTop { display: flex; align-items: center; justify-content: space-between; }
 .empty { flex: 1; display: grid; place-items: center; color: var(--text-muted); }
 
 

@@ -7,6 +7,7 @@ import type { AppSettingsDto, Capabilities, CompareStats, EncodeSettings, Job, P
 import { ApiError } from './errors';
 import { audioCache } from '@/audio/cache';
 import type { StftParams, StftResult } from '@/audio/dsp';
+import { saveFromServer } from '@/lib/save';
 
 export const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 const BASE = ((import.meta.env.VITE_API_BASE as string | undefined) ?? '').replace(/\/$/, '');
@@ -71,7 +72,7 @@ export const api = {
     }),
     /**
      * Audio for the DTS lane / A/B playback. Encoded tracks: GET /api/tracks/:id/output/audio (the real DTS output,
-     * decoded to FLAC by the server). Not encoded yet: a band-limited preview of the current settings, made in the browser.
+     * decoded back to WAV by the server). Not encoded yet: a band-limited preview of the current settings, made in the browser.
      */
     outputAudio: (t: Track) => {
       const kbps = t.output ? t.output.bitrateKbps : t.settings.bitrateKbps;
@@ -92,12 +93,14 @@ export const api = {
         return { db: new Float32Array(await res.arrayBuffer()), cols: h('Cols'), rows: h('Rows'), maxDb: h('Max-Db'), fMin: h('F-Min'), fMax: h('F-Max'), duration: h('Duration') };
       });
     },
-    /** GET /api/tracks/:id/output — download the encoded file. */
-    downloadOutput: (t: Track) => {
-      if (USE_MOCKS) return false;
-      const a = document.createElement('a'); a.href = `${BASE}/api/tracks/${t.id}/output`; a.download = t.output?.fileName ?? ''; document.body.appendChild(a); a.click(); a.remove();
-      return true;
+    /** GET /api/tracks/:id/output — save the encoded file (Save-as dialog where the browser supports it). */
+    saveOutput: (t: Track) => {
+      const name = t.output?.fileName ?? 'output.dts';
+      const wav = name.toLowerCase().endsWith('.wav');
+      return saveFromServer(`${BASE}/api/tracks/${t.id}/output`, name, wav ? { description: 'DTS in WAV', mime: 'audio/wav', ext: '.wav' } : { description: 'DTS audio', mime: 'audio/vnd.dts', ext: '.dts' });
     },
+    /** GET /api/tracks/:id/output/audio?download=1 — save the DTS output decoded back to WAV. */
+    saveDecoded: (t: Track) => saveFromServer(`${BASE}/api/tracks/${t.id}/output/audio?download=1`, (t.output?.fileName ?? t.name).replace(/(\.dts)?\.(wav|dts)$/i, '') + '.decoded.wav', { description: 'WAV audio', mime: 'audio/wav', ext: '.wav' }),
   },
   presets: {
     list: () => request<Preset[]>('GET', '/api/presets'),

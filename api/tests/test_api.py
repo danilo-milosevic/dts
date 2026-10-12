@@ -80,7 +80,7 @@ def test_encode_stereo_end_to_end(client, tmp_path):
     assert dl.status_code == 200 and "Song.dts" in dl.headers["Content-Disposition"]
     assert dl.data[:4] == b"\x7f\xfe\x80\x01"  # DTS core sync word
     pv = client.get(f"/api/tracks/{t['id']}/output/audio")
-    assert pv.status_code == 200 and pv.data[:4] == b"fLaC"
+    assert pv.status_code == 200 and pv.data[:4] == b"RIFF"
 
 
 def test_mono_and_wav_container_and_bitrate_clamp(client, tmp_path):
@@ -183,3 +183,23 @@ def test_default_bitrate_applies_to_new_tracks(client, tmp_path):
     assert s["defaults"]["presetId"] == "bluray-stereo"
     assert upload(client, make_wav(tmp_path / "St.wav"))["settings"]["presetId"] == "bluray-stereo"
     assert upload(client, make_wav(tmp_path / "Sur.wav", channels=6))["settings"]["presetId"] == "bluray-51"
+
+
+def test_encode_then_decode_is_timed(client, tmp_path):
+    t = upload(client, make_wav(tmp_path / "Film.wav", channels=6, codec="pcm_s16le"))
+    client.post("/api/jobs", json={"trackIds": [t["id"]]})
+    done = wait_done(client, t["id"])
+    out = done["output"]
+    assert out["encodeSeconds"] > 0 and out["decodeSeconds"] > 0
+    assert out["decodedBytes"] > out["sizeBytes"]  # decompressed WAV is bigger than the DTS
+    job = client.get("/api/jobs").get_json()["jobs"][0]
+    assert job["decodeSeconds"] == out["decodeSeconds"] and job["decodedBytes"] == out["decodedBytes"]
+    wav = client.get(f"/api/tracks/{t['id']}/output/audio")
+    assert wav.status_code == 200 and wav.data[:4] == b"RIFF" and len(wav.data) == out["decodedBytes"]
+    dl = client.get(f"/api/tracks/{t['id']}/output/audio?download=1")
+    assert "Film.decoded.wav" in dl.headers["Content-Disposition"]
+    row = client.get("/api/stats/compare").get_json()["sessionFiles"][0]
+    assert row["decodeSeconds"] > 0 and row["decodedMB"] > row["outputMB"]
+    # DTS files are no longer accepted as imports
+    r = client.post("/api/tracks", data={"files": (io.BytesIO(b"x"), "Mix.dts")}, content_type="multipart/form-data")
+    assert r.status_code == 415

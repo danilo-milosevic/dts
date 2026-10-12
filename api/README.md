@@ -39,12 +39,12 @@ dts_api/
   routes.py            every endpoint in web/API.md
   store.py             SQLite: one JSON document per track / job / preset (+ key-value for settings, queue state)
   worker.py            EncodeQueue: N threads claim the next queued job and run ffmpeg
-  media.py             ffprobe analysis, EBU R128 loudness/true peak, the ffmpeg command, FLAC preview, PCM decode
+  media.py             ffprobe analysis, EBU R128 loudness/true peak, the ffmpeg command, DTS → WAV decode, PCM decode for STFT
   stft.py              numpy STFT binned to the client's pixel grid, LRU-cached
   domain.py            defaults, presets, capabilities, naming helpers
 storage/
   sources/<track>.wav            uploads (duplicated tracks share the file)
-  outputs/<track>/<name>.dts     current encode + preview.flac (decoded output for A/B in the browser)
+  outputs/<track>/<name>.dts     current encode + decoded.wav (the DTS decoded back to WAV: timed, played for A/B)
   logs/<job>.log                 ffmpeg stderr per job
   dts.sqlite3
 ```
@@ -57,7 +57,7 @@ storage/
   - DRC through `acompressor`, and a −1 dB ceiling `alimiter`.
   - Then `-c:a dca -b:a <kbps>k`, written to `.dts`, or to `.dts.wav` (DTS-in-WAV).
   - Bitrates outside the encoder's range are clamped, and the job's `notes` say so.
-- **Not used by ffmpeg's DTS Core encoder:** `dialnormDb` (DTS Core has no dialnorm metadata in ffmpeg) and `bitDepth`. Both are stored with the settings. `outputFolder` and `keepOriginal` are kept for the UI. Files always stay in `storage/` and are downloaded through `GET /api/tracks/:id/output`.
+- **Not used by ffmpeg's DTS Core encoder:** `bitDepth` (stored with the settings only). `outputFolder` and `keepOriginal` are kept for the UI. Files always stay in `storage/` and are downloaded through `GET /api/tracks/:id/output`.
 - **DTS Core only.** `codec` must be `core` and `container` `dts` or `wav`; anything else gets a `422`.
 - **Spectrograms** are computed here, for the source and the encoded output. The file is decoded once with ffmpeg to float32. Each request is binned to the requested `cols × rows`, so the response is about 1 MB for a full-width lane. Results are cached, and concurrent requests for the same file share one decode.
 - **Updates are polled.** The frontend polls `/api/jobs` every 500 ms only while something is queued or encoding. For one user on a local server this is simpler than SSE/WebSockets and costs nothing.

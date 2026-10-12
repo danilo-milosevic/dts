@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react';
+import { InfoTip } from './InfoTip';
 import s from './Field.module.css';
 
-/** Label + optional hint + control (Figma "Field Row"). */
-export function Field({ label, hint, children, layout = 'inline', htmlFor }: { label: ReactNode; hint?: ReactNode; children: ReactNode; layout?: 'inline' | 'stacked'; htmlFor?: string }) {
+/** Label + optional hint + control (Figma "Field Row"). `info` adds an ⓘ with a longer explanation. */
+export function Field({ label, hint, info, children, layout = 'inline', htmlFor }: { label: ReactNode; hint?: ReactNode; info?: ReactNode; children: ReactNode; layout?: 'inline' | 'stacked'; htmlFor?: string }) {
   return (
     <div className={layout === 'inline' ? s.inline : s.stacked}>
       <div className={s.text}>
-        <label className={s.label} htmlFor={htmlFor}>{label}</label>
+        <span><label className={s.label} htmlFor={htmlFor}>{label}</label>{info && <InfoTip title={String(label)}>{info}</InfoTip>}</span>
         {hint && <span className={s.hint}>{hint}</span>}
       </div>
       <div className={s.control}>{children}</div>

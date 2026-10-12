@@ -16,3 +16,9 @@
 - ✓ Setting a default bitrate does nothing, it stil choses the first default (1509)
 - ✓ Remove linear and log from encode time vs file size, log is bit confusing, only keep linear
 - ✓ Remove "recent folders" from start page, they dont even exist
+- ✓ Make the download button offer dialog where we want to download and name the file
+- ✓ Add option to decode DTS -> WAV 
+- ✓ Remove Peak and Loudness from metainfo for WAV
+- ✓ Remove Dialog normalization
+- ✓ We don't need to import DTS and then decode, instead import WAVs -> encode to DTS and then decode. The goal is to later compare times for compression/decompression and also sizes after compression/decompression.
+- DONT DO THIS FOR NOW !! Also we need to execute compression/decompression for multiple popular formats, we don't need to show them, only for comparsions. In comapre tab add another widget where we will compare times, sizes, percent saved memory between WAV, DTS and couple of other formats.

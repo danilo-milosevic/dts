@@ -418,7 +418,8 @@ def compare_stats():
             layout, src = j["settings"].get("layout"), tracks.get(j["trackId"], {}).get("channels", 2)
             ch = 1 if layout == "1.0" else 2 if layout == "2.0" else min(6, src) if layout in ("5.1", "7.1", "auto") and src > 2 else src
         return d.layout_group(int(ch))
-    encodes = [{"file": j["trackName"], "layout": group(j), "inputMB": round(j["inputBytes"] / d.MB, 1), "seconds": round(j["encodeSeconds"] or 0, 2)}
+    encodes = [{"file": j["trackName"], "layout": group(j), "inputMB": round(j["inputBytes"] / d.MB, 1), "seconds": round(j["encodeSeconds"] or 0, 2),
+                "decodeSeconds": round(j["decodeSeconds"], 3) if j.get("decodeSeconds") is not None else None}
                for j in jobs if j["status"] == "done"]
     session = [{"trackId": j["trackId"], "file": j["trackName"], "layout": group(j), "inputMB": round(j["inputBytes"] / d.MB, 1),
                 "outputMB": round(j["outputBytes"] / d.MB, 2) if j.get("outputBytes") else None,

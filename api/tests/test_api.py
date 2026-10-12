@@ -200,6 +200,7 @@ def test_encode_then_decode_is_timed(client, tmp_path):
     assert "Film.decoded.wav" in dl.headers["Content-Disposition"]
     row = client.get("/api/stats/compare").get_json()["sessionFiles"][0]
     assert row["decodeSeconds"] > 0 and row["decodedMB"] > row["outputMB"]
+    assert client.get("/api/stats/compare").get_json()["encodes"][0]["decodeSeconds"] > 0
     # DTS files are no longer accepted as imports
     r = client.post("/api/tracks", data={"files": (io.BytesIO(b"x"), "Mix.dts")}, content_type="multipart/form-data")
     assert r.status_code == 415

@@ -11,6 +11,12 @@ import s from './SavingsBars.module.css';
 type Row = CompareStats['sessionFiles'][number];
 
 /** Horizontal bars: % smaller (or MB before/after) per encoded file. */
+/** Tooltip line: WAV → DTS → decoded WAV sizes and the encode / decode times. */
+const detail = (r: Row) => [
+  `${r.inputMB} MB WAV → ${r.outputMB} MB DTS${r.decodedMB != null ? ` → ${r.decodedMB} MB decoded` : ''}`,
+  [r.encodeSeconds != null && `encode ${r.encodeSeconds.toFixed(2)} s`, r.decodeSeconds != null && `decode ${r.decodeSeconds.toFixed(2)} s`, layoutGroupLabel[r.layout]].filter(Boolean).join(' · '),
+].join('\n');
+
 export function SavingsBars({ rows, mode, onOpen }: { rows: Row[]; mode: 'percent' | 'mb'; onOpen: (trackId: string) => void }) {
   const m = useMotion();
   const [mounted, setMounted] = useState(false);
@@ -19,7 +25,7 @@ export function SavingsBars({ rows, mode, onOpen }: { rows: Row[]; mode: 'percen
   const maxMB = Math.max(1, ...rows.map(r => r.inputMB));
   const pct = (r: Row) => (r.outputMB == null ? 0 : (1 - r.outputMB / r.inputMB) * 100);
   const ticks = mode === 'percent' ? ['0%', '25%', '50%', '75%', '100%'] : [0, 0.25, 0.5, 0.75, 1].map(f => `${Math.round(maxMB * f)} MB`);
-  const vars = { '--name-w': '180px', '--val-w': '170px' } as CSSProperties;
+  const vars = { '--name-w': '180px', '--val-w': mode === 'mb' ? '220px' : '170px' } as CSSProperties;
   return (
     <div style={{ ...vars, position: 'relative' }} onMouseLeave={() => setHover(null)}>
       <div className={s.axis}><span /><div className={s.ticks}>{ticks.map(t => <span key={t}>{t}</span>)}</div><span /></div>
@@ -42,13 +48,13 @@ export function SavingsBars({ rows, mode, onOpen }: { rows: Row[]; mode: 'percen
               <span className={s.value}>
                 {r.status === 'failed' ? <Tag tone="danger">Failed</Tag> : mode === 'percent'
                   ? <><span className={s.pct}>{pct(r).toFixed(1)}%</span><span className={s.mb}>{r.inputMB} → {r.outputMB} MB</span></>
-                  : <><span className={s.pct}>{r.outputMB} MB</span><span className={s.mb}>of {r.inputMB} MB</span></>}
+                  : <><span className={s.pct}>{r.outputMB} MB</span><span className={s.mb}>of {r.inputMB}{r.decodedMB != null ? ` · ↩ ${r.decodedMB}` : ''} MB</span></>}
               </span>
             </motion.div>
           );
         })}
       </AnimatePresence>
-      <FloatingTip show={!!hover && hover.row.status === 'done'} x={hover?.x ?? 0} y={hover?.y ?? 0} title={hover ? `${pct(hover.row).toFixed(1)}% smaller · ×${(hover.row.inputMB / (hover.row.outputMB || 1)).toFixed(2)}` : ''} detail={hover ? `${hover.row.inputMB} MB → ${hover.row.outputMB} MB · ${layoutGroupLabel[hover.row.layout]}` : undefined} />
+      <FloatingTip show={!!hover && hover.row.status === 'done'} x={hover?.x ?? 0} y={hover?.y ?? 0} title={hover ? `${pct(hover.row).toFixed(1)}% smaller · ×${(hover.row.inputMB / (hover.row.outputMB || 1)).toFixed(2)}` : ''} detail={hover ? detail(hover.row) : undefined} />
     </div>
   );
 }

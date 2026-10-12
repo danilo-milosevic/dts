@@ -15,14 +15,14 @@ export function ScatterChart({ data, hidden, height, highlight }: { data: Encode
   const brushRef = useRef<SVGGElement>(null);
   const brush = useRef<BrushBehavior<unknown> | null>(null);
   const visible = useMemo(() => data.filter(d => !hidden.includes(d.layout)), [data, hidden]);
-  const maxX = Math.max(10, ...data.map(d => d.inputMB)) * 1.06, maxY = Math.max(5, ...data.map(d => d.seconds)) * 1.1;
+  const maxX = Math.max(10, ...data.map(d => d.inputMB)) * 1.06, maxY = Math.max(0.5, ...data.map(d => d.seconds)) * 1.1; // fits short decode times too
   const iw = Math.max(10, width - MARGIN.l - MARGIN.r), ih = Math.max(10, height - MARGIN.t - MARGIN.b);
 
   const x = useMemo(() => {
     const dom: [number, number] = zoom ?? [0, maxX];
     return scaleLinear().domain(dom).range([MARGIN.l, MARGIN.l + iw]).clamp(false);
   }, [zoom, maxX, iw]);
-  const yMax = useMemo(() => { const inView = visible.filter(d => d.inputMB >= x.domain()[0] && d.inputMB <= x.domain()[1]); return Math.max(5, ...inView.map(d => d.seconds)) * 1.12; }, [visible, x]);
+  const yMax = useMemo(() => { const inView = visible.filter(d => d.inputMB >= x.domain()[0] && d.inputMB <= x.domain()[1]); return Math.max(0.5, ...inView.map(d => d.seconds)) * 1.12; }, [visible, x]);
   const y = useMemo(() => scaleLinear().domain([0, zoom ? yMax : maxY]).nice().range([MARGIN.t + ih, MARGIN.t]), [zoom, yMax, maxY, ih]);
   const delaunay = useMemo(() => Delaunay.from(visible, d => x(d.inputMB), d => y(d.seconds)), [visible, x, y]);
 
@@ -68,7 +68,7 @@ export function ScatterChart({ data, hidden, height, highlight }: { data: Encode
           })}
         </g>
       </svg>
-      <FloatingTip show={!!h} x={h ? x(h.inputMB) : 0} y={h ? y(h.seconds) : 0} bounds={{ w: width, h: height }} title={h?.file} detail={h ? `${h.inputMB} MB · ${h.seconds.toFixed(1)} s · ${layoutGroupLabel[h.layout]}` : undefined} />
+      <FloatingTip show={!!h} x={h ? x(h.inputMB) : 0} y={h ? y(h.seconds) : 0} bounds={{ w: width, h: height }} title={h?.file} detail={h ? `${h.inputMB} MB · ${h.seconds < 1 ? h.seconds.toFixed(2) : h.seconds.toFixed(1)} s · ${layoutGroupLabel[h.layout]}` : undefined} />
       <div className={s.overview} onDoubleClick={() => setZoom(null)}>
         <svg width={width} height={44} style={{ position: 'absolute', inset: 0 }}>
           {data.map((d, i) => <circle key={i} cx={ox(d.inputMB)} cy={40 - (d.seconds / maxY) * 36} r={2} fill={layoutToneVar[d.layout]} opacity={hidden.includes(d.layout) ? 0.2 : 1} />)}

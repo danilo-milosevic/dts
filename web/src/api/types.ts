@@ -83,7 +83,8 @@ export interface Job {
 export interface QueueState { running: boolean; workers: number; maxWorkers: number; startedAt: string | null; }
 
 
-export interface EncodeSample { file: string; layout: LayoutGroup; inputMB: number; seconds: number; }
+/** One finished encode: `seconds` = encode time, `decodeSeconds` = decoding the DTS back to WAV (null for older encodes). */
+export interface EncodeSample { file: string; layout: LayoutGroup; inputMB: number; seconds: number; decodeSeconds?: number | null; }
 export interface CompareStats {
   encodes: EncodeSample[];
   sessionFiles: { trackId: string; file: string; layout: LayoutGroup; inputMB: number; outputMB: number | null; status: 'done' | 'failed'; reason?: string; durationSec: number; encodeSeconds: number | null; decodeSeconds?: number | null; decodedMB?: number | null }[];

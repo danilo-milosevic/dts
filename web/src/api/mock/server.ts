@@ -146,7 +146,7 @@ const groupOf = (j: Job) => { const t = db.tracks.find(x => x.id === j.trackId);
 route('GET', '/api/stats/compare', () => {
   const done = db.jobs.filter(j => j.status === 'done' || j.status === 'failed');
   const sessionFiles: CompareStats['sessionFiles'] = done.map(j => { const t = db.tracks.find(x => x.id === j.trackId); return { trackId: j.trackId, file: j.trackName, layout: groupOf(j), inputMB: +(j.inputBytes / MB).toFixed(1), outputMB: j.outputBytes ? +(j.outputBytes / MB).toFixed(2) : null, status: j.status === 'done' ? 'done' : 'failed', reason: j.error ?? undefined, durationSec: t?.durationSec ?? 0, encodeSeconds: j.encodeSeconds, decodeSeconds: j.decodeSeconds ?? null, decodedMB: j.decodedBytes ? +(j.decodedBytes / MB).toFixed(2) : null }; });
-  const encodes = [...historicalEncodes, ...done.filter(j => j.status === 'done').map(j => ({ file: j.trackName, layout: groupOf(j), inputMB: +(j.inputBytes / MB).toFixed(1), seconds: +(j.encodeSeconds ?? 0).toFixed(1) }))];
+  const encodes = [...historicalEncodes, ...done.filter(j => j.status === 'done').map(j => ({ file: j.trackName, layout: groupOf(j), inputMB: +(j.inputBytes / MB).toFixed(1), seconds: +(j.encodeSeconds ?? 0).toFixed(1), decodeSeconds: j.decodeSeconds ?? null }))];
   return { encodes, sessionFiles } satisfies CompareStats;
 });
 

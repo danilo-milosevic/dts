@@ -1,4 +1,4 @@
-.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-16); }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-16); }
 .kpi { background: var(--bg-card); border-radius: var(--radius-lg); padding: var(--space-16); display: flex; align-items: center; gap: var(--space-16); min-width: 0; }
 .kpiText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-4); }
 .kpiValue { display: flex; align-items: center; gap: var(--space-8); font-size: var(--fs-title); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; }
@@ -16,3 +16,6 @@
 .groupName { display: flex; align-items: center; gap: 6px; font-size: var(--fs-label); font-weight: var(--fw-medium); }
 .dot { width: 8px; height: 8px; border-radius: 50%; }
 @media (max-width: 1500px) { .row { grid-template-columns: 1fr; } .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.timeRow { display: flex; gap: var(--space-16); flex-wrap: wrap; }
+.timeRow b { font-weight: var(--fw-medium); font-variant-numeric: tabular-nums; }

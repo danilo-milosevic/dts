@@ -77,5 +77,5 @@ export const historicalEncodes: CompareStats['encodes'] = [
   ['Foley_pass2.wav', 'stereo', 41, 6.9], ['Crowd_loop.wav', 'surround', 58, 9.4], ['Trailer_mix.wav', 'surround', 120, 18.6], ['Reel3_stems.wav', 'surround', 160, 24.1], ['Episode_04.wav', 'surround', 210, 32.3],
   ['Sting_01.wav', 'mono', 12, 3.1], ['Theme_alt.wav', 'stereo', 33, 6.2], ['Suite_movt2.wav', 'stereo', 140, 22.0], ['Live_set_A.wav', 'stereo', 205, 31.9],
   ['Room_tone_5.1.wav', 'surround', 18, 4.1], ['Rain_5.1.wav', 'surround', 52, 9.0], ['Battle_7.1.wav', 'surround', 120, 19.6], ['VO_take12.wav', 'mono', 26, 4.4],
-].map(([file, layout, inputMB, seconds]) => ({ file: file as string, layout: layout as LayoutGroup, inputMB: inputMB as number, seconds: seconds as number }));
+].map(([file, layout, inputMB, seconds]) => ({ file: file as string, layout: layout as LayoutGroup, inputMB: inputMB as number, seconds: seconds as number, decodeSeconds: +((seconds as number) / 6 + 0.05).toFixed(2) }));
 

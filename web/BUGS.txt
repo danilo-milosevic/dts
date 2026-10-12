@@ -21,4 +21,5 @@
 - ✓ Remove Peak and Loudness from metainfo for WAV
 - ✓ Remove Dialog normalization
 - ✓ We don't need to import DTS and then decode, instead import WAVs -> encode to DTS and then decode. The goal is to later compare times for compression/decompression and also sizes after compression/decompression.
+- ✓ Add decompression times/sizes to Compare tab
 - DONT DO THIS FOR NOW !! Also we need to execute compression/decompression for multiple popular formats, we don't need to show them, only for comparsions. In comapre tab add another widget where we will compare times, sizes, percent saved memory between WAV, DTS and couple of other formats.

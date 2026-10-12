@@ -52,7 +52,6 @@ Job lifecycle: `queued → encoding → done | failed`. Cancelling removes the j
 |---|---|---|---|
 
 - `encodes`: every finished encode `{ file, layout, inputMB, seconds }` (history + session) — scatter chart. `layout` is the output channel group: `mono`, `stereo` or `surround`.
-- `savingsVsBitrate`: savings curves for stereo and 5.1 sources and the current preset bitrate.
 - `sessionFiles`: per-file result for this session `{ trackId, file, layout, inputMB, outputMB | null, status, reason?, durationSec, encodeSeconds }`.
 
 ## Capabilities
@@ -68,5 +67,7 @@ The app encodes **DTS Core** (Coherent Acoustics) with ffmpeg's `dca` encoder: u
 | GET | `/api/settings` | — | `AppSettingsDto` (output device, buffer size, preview-after-encode, default `EncodeSettings`) |
 |---|---|---|---|
 | PUT | `/api/settings` | `Partial<AppSettingsDto>` | `AppSettingsDto` |
+
+`defaults` are the encoder settings given to newly uploaded tracks (existing tracks keep theirs). A settings object names a preset (`presetId`) only while its values match that preset; otherwise `presetId` is `null` (Custom). The server applies this to the defaults on `PUT` and to new tracks on upload.
 
 Appearance settings (theme, accent, font size, density, corners, motion) are client-only and stored in `localStorage`. Encode parallelism is decided by the server (`QueueState.workers`).

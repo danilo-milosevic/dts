@@ -80,7 +80,6 @@ export interface QueueState { running: boolean; workers: number; maxWorkers: num
 export interface EncodeSample { file: string; layout: LayoutGroup; inputMB: number; seconds: number; }
 export interface CompareStats {
   encodes: EncodeSample[];
-  savingsVsBitrate: { stereo: { sourceKbps: number; points: [number, number][] }; surround: { sourceKbps: number; points: [number, number][] }; currentPresetKbps: number };
   sessionFiles: { trackId: string; file: string; layout: LayoutGroup; inputMB: number; outputMB: number | null; status: 'done' | 'failed'; reason?: string; durationSec: number; encodeSeconds: number | null }[];
 }
 

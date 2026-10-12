@@ -31,7 +31,7 @@ No backend at hand? Put `VITE_USE_MOCKS=true` in `web/.env` and `npm run dev` ru
 - **Playback** — Web Audio: play/pause/stop/skip/loop, scrubber, volume, Source/DTS switch, keyboard (Space, Alt+←/→).
 - **Encoder settings** — DTS Core presets, bitrate/layout/loudness/output options, live size/ratio/time estimate, save preset, encode.
 - **Queue** — live progress, drag-to-reorder, cancel/retry, pause/resume.
-- **Compare** — KPI cards with sparklines; D3 scatter (encode time vs size) with legend toggles, linear/log, brush-to-zoom; savings-vs-bitrate curve with a draggable preset marker that updates the selected track; savings-by-file bars (percent/MB, sort); library totals.
+- **Compare** — KPI cards with sparklines; D3 scatter (encode time vs size) with legend toggles, linear/log, brush-to-zoom; savings-by-file bars (percent/MB, sort); library totals.
 - **Settings** — theme (animated circular reveal), accent color, font size, density, corners, motion speed, playback, encoder defaults.
 
 ## Styling: design tokens

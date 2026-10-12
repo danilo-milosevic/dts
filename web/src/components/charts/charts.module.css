@@ -16,14 +16,6 @@
 .fit { fill: none; stroke-width: 1.5; stroke-dasharray: 6 6; opacity: 0.7; transition: opacity var(--dur-base); }
 .cross { stroke: var(--text-muted); stroke-dasharray: 3 4; pointer-events: none; }
 .hidden { opacity: 0 !important; pointer-events: none; }
-.ref { stroke: var(--accent-success); stroke-width: 1.5; stroke-dasharray: 6 5; }
-.refLabel { fill: var(--accent-success); font-size: var(--fs-caption); font-weight: var(--fw-medium); }
-.marker { stroke: var(--text-muted); stroke-dasharray: 3 4; }
-.markerLabel { fill: var(--text-muted); font-size: var(--fs-caption); font-weight: var(--fw-medium); }
-.handle { cursor: ew-resize; }
-.handle rect { fill: var(--bg-panel); stroke: var(--border-default); }
-.handle:hover rect { stroke: var(--accent-primary); }
-.handleText { fill: var(--text-primary); font-size: var(--fs-caption); font-weight: var(--fw-medium); pointer-events: none; }
 .overview { position: relative; height: 44px; border-radius: 6px; background: var(--bg-inset); overflow: hidden; margin-top: var(--space-12); }
 .overview :global(.selection) { fill: var(--accent-primary); fill-opacity: 0.14; stroke: none; }
 .overview :global(.handle) { fill: var(--accent-primary); }

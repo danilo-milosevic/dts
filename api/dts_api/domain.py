@@ -103,6 +103,14 @@ def merge_settings(base: dict[str, Any], patch: dict[str, Any] | None) -> dict[s
     return out
 
 
+def match_preset(s: dict[str, Any], presets: list[dict[str, Any]]) -> str | None:
+    """Id of the first preset whose settings all equal these settings, else None ("Custom")."""
+    for p in presets:
+        if p.get("settings") and all(s.get(k) == v for k, v in p["settings"].items()):
+            return p["id"]
+    return None
+
+
 def invalid_reason(s: dict[str, Any]) -> str | None:
     """Why these settings cannot be encoded, or None when they can."""
     if s.get("codec", "core") != "core":
@@ -115,10 +123,3 @@ def invalid_reason(s: dict[str, Any]) -> str | None:
 def layout_group(channels: int) -> str:
     """Output channel group the Compare page groups encodes by."""
     return "mono" if channels <= 1 else "stereo" if channels == 2 else "surround"
-
-
-def savings_curve(current_kbps: int) -> dict[str, Any]:
-    """Size saving vs. DTS Core bitrate for a 48 kHz / 24-bit stereo and 5.1 source (pure arithmetic)."""
-    def curve(src_kbps: int) -> dict[str, Any]:
-        return {"sourceKbps": src_kbps, "points": [[k, round((1 - k / src_kbps) * 100, 1)] for k in (384, 768, 1152, 1509)]}
-    return {"stereo": curve(48000 * 24 * 2 // 1000), "surround": curve(48000 * 24 * 6 // 1000), "currentPresetKbps": current_kbps}

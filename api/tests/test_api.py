@@ -130,7 +130,7 @@ def test_pause_reorder_cancel(client, tmp_path):
     assert client.get("/api/jobs").get_json()["jobs"] == []
     stats = client.get("/api/stats/compare").get_json()
     assert len(stats["encodes"]) == 1 and stats["sessionFiles"] == []  # history kept, queue cleared
-    assert stats["encodes"][0]["layout"] == "stereo" and "losslessReferencePct" not in stats["savingsVsBitrate"]
+    assert stats["encodes"][0]["layout"] == "stereo" and "savingsVsBitrate" not in stats
 
 
 def test_stft(client, tmp_path):
@@ -170,3 +170,16 @@ def test_settings_and_presets(client):
     assert presets[0]["id"] == "bluray-stereo"
     new = client.post("/api/presets", json={"name": "Mine", "settings": {"bitrateKbps": 1152}}).get_json()
     assert client.get("/api/presets").get_json()[-1]["id"] == new["id"]
+
+
+def test_default_bitrate_applies_to_new_tracks(client, tmp_path):
+    s = client.put("/api/settings", json={"defaults": {"bitrateKbps": 768}}).get_json()
+    assert s["defaults"]["bitrateKbps"] == 768 and s["defaults"]["presetId"] is None  # no longer the 1509 preset
+    t = upload(client, make_wav(tmp_path / "New.wav"))
+    assert t["settings"]["bitrateKbps"] == 768 and t["settings"]["presetId"] is None
+    client.post("/api/jobs", json={"trackIds": [t["id"]]})
+    assert wait_done(client, t["id"])["output"]["bitrateKbps"] == 768
+    s = client.put("/api/settings", json={"defaults": {"bitrateKbps": 1509}}).get_json()
+    assert s["defaults"]["presetId"] == "bluray-stereo"
+    assert upload(client, make_wav(tmp_path / "St.wav"))["settings"]["presetId"] == "bluray-stereo"
+    assert upload(client, make_wav(tmp_path / "Sur.wav", channels=6))["settings"]["presetId"] == "bluray-51"

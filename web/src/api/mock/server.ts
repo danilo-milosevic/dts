@@ -3,8 +3,8 @@
  * including a simulated encode queue that advances in real time.
  */
 import type { AppSettingsDto, Capabilities, CompareStats, EncodeSettings, Job, Preset, QueueState, Track } from '../types';
-import { defaultSettings, historicalEncodes, presets, savingsCurve, seedJobs, seedTracks } from './seed';
-import { MB, estimateOutput, layoutChannels, layoutGroupOf, outputName, presetLabel, uid } from '@/lib/format';
+import { defaultSettings, historicalEncodes, presets, seedJobs, seedTracks } from './seed';
+import { MB, estimateOutput, layoutChannels, layoutGroupOf, matchPreset, outputName, presetLabel, uid } from '@/lib/format';
 import { audioCache } from '@/audio/cache';
 import { ApiError } from '../errors';
 
@@ -18,6 +18,8 @@ const db = {
 db.jobs = seedJobs(db.tracks);
 
 const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x));
+/** Settings name a preset only while they match it. */
+const withPreset = (s: EncodeSettings): EncodeSettings => ({ ...s, presetId: matchPreset(s, presets) });
 const now = () => new Date().toISOString();
 const track = (id: string) => { const t = db.tracks.find(x => x.id === id); if (!t) throw new ApiError(404, 'Track not found'); return t; };
 const job = (id: string) => { const j = db.jobs.find(x => x.id === id); if (!j) throw new ApiError(404, 'Job not found'); return j; };
@@ -83,7 +85,7 @@ async function analyzeUpload(file: File): Promise<Track> {
     id: uid('trk'), name: file.name, format: /\.bwf$/i.test(file.name) ? 'BWF' : 'WAV', sizeBytes: file.size, durationSec: audio.duration, sampleRate: sr,
     bitDepth: bits, floatingPoint: hdr?.format === 3, channels: ch, layout: ch === 1 ? 'Mono' : ch === 2 ? 'Stereo' : ch === 6 ? '5.1' : '7.1',
     bitrateKbps: Math.round((sr * bits * ch) / 1000), peakDbfs: +(20 * Math.log10(peak || 1e-6)).toFixed(1), loudnessLufs: +(20 * Math.log10(Math.sqrt(sum / Math.max(n, 1)) || 1e-6) - 0.7).toFixed(1),
-    status: 'raw', createdAt: now(), settings: { ...db.settings.defaults, layout: ch === 1 ? 'auto' : ch >= 6 ? '5.1' : '2.0' },
+    status: 'raw', createdAt: now(), settings: withPreset({ ...db.settings.defaults, layout: ch === 1 ? 'auto' : ch >= 6 ? '5.1' : '2.0' }),
   };
   audioCache.setSource(t.id, audio);
   return t;
@@ -143,12 +145,12 @@ route('GET', '/api/stats/compare', () => {
   const done = db.jobs.filter(j => j.status === 'done' || j.status === 'failed');
   const sessionFiles: CompareStats['sessionFiles'] = done.map(j => { const t = db.tracks.find(x => x.id === j.trackId); return { trackId: j.trackId, file: j.trackName, layout: groupOf(j), inputMB: +(j.inputBytes / MB).toFixed(1), outputMB: j.outputBytes ? +(j.outputBytes / MB).toFixed(2) : null, status: j.status === 'done' ? 'done' : 'failed', reason: j.error ?? undefined, durationSec: t?.durationSec ?? 0, encodeSeconds: j.encodeSeconds }; });
   const encodes = [...historicalEncodes, ...done.filter(j => j.status === 'done').map(j => ({ file: j.trackName, layout: groupOf(j), inputMB: +(j.inputBytes / MB).toFixed(1), seconds: +(j.encodeSeconds ?? 0).toFixed(1) }))];
-  return { encodes, savingsVsBitrate: savingsCurve, sessionFiles } satisfies CompareStats;
+  return { encodes, sessionFiles } satisfies CompareStats;
 });
 
 route('GET', '/api/capabilities', () => ({ encoder: 'mock', containers: ['dts', 'wav'], layouts: ['1.0', '2.0', '5.1', '7.1', 'auto'], maxChannels: 6, maxSampleRate: 48000, bitrateKbps: { min: { 1: 192, 2: 320, 3: 384, 4: 512, 5: 640, 6: 768 }, max: 3840 }, layoutNotes: { '7.1': 'DTS Core carries at most 5.1 — 7.1 sources are downmixed to 5.1.' } } satisfies Capabilities));
 route('GET', '/api/settings', () => db.settings);
-route('PUT', '/api/settings', (_p, body) => { db.settings = { ...db.settings, ...(body as Partial<AppSettingsDto>) }; return db.settings; });
+route('PUT', '/api/settings', (_p, body) => { db.settings = { ...db.settings, ...(body as Partial<AppSettingsDto>) }; db.settings.defaults = withPreset(db.settings.defaults); return db.settings; });
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 

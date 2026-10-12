@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Delaunay, brushX, scaleLinear, scaleLog, select, type BrushBehavior } from 'd3';
+import { Delaunay, brushX, scaleLinear, select, type BrushBehavior } from 'd3';
 import type { EncodeSample } from '@/api/types';
 import { useElementSize } from '@/hooks/useElementSize';
 import { FloatingTip } from '../ui/Tooltip';
@@ -8,7 +8,7 @@ import { LAYOUT_GROUPS, MARGIN, layoutToneVar, linearFit } from './useChartScale
 import s from './charts.module.css';
 
 /** Encode time vs input size. Hover for details, legend hides layout groups, drag the overview to zoom. */
-export function ScatterChart({ data, hidden, scale, height, highlight }: { data: EncodeSample[]; hidden: string[]; scale: 'linear' | 'log'; height: number; highlight?: string }) {
+export function ScatterChart({ data, hidden, height, highlight }: { data: EncodeSample[]; hidden: string[]; height: number; highlight?: string }) {
   const [ref, { width }] = useElementSize<HTMLDivElement>();
   const [zoom, setZoom] = useState<[number, number] | null>(null);
   const [hover, setHover] = useState<EncodeSample | null>(null);
@@ -19,9 +19,9 @@ export function ScatterChart({ data, hidden, scale, height, highlight }: { data:
   const iw = Math.max(10, width - MARGIN.l - MARGIN.r), ih = Math.max(10, height - MARGIN.t - MARGIN.b);
 
   const x = useMemo(() => {
-    const dom: [number, number] = zoom ?? (scale === 'log' ? [Math.max(1, Math.min(...data.map(d => d.inputMB)) * 0.8), maxX] : [0, maxX]);
-    return (scale === 'log' ? scaleLog() : scaleLinear()).domain(dom).range([MARGIN.l, MARGIN.l + iw]).clamp(false);
-  }, [zoom, scale, maxX, iw, data]);
+    const dom: [number, number] = zoom ?? [0, maxX];
+    return scaleLinear().domain(dom).range([MARGIN.l, MARGIN.l + iw]).clamp(false);
+  }, [zoom, maxX, iw]);
   const yMax = useMemo(() => { const inView = visible.filter(d => d.inputMB >= x.domain()[0] && d.inputMB <= x.domain()[1]); return Math.max(5, ...inView.map(d => d.seconds)) * 1.12; }, [visible, x]);
   const y = useMemo(() => scaleLinear().domain([0, zoom ? yMax : maxY]).nice().range([MARGIN.t + ih, MARGIN.t]), [zoom, yMax, maxY, ih]);
   const delaunay = useMemo(() => Delaunay.from(visible, d => x(d.inputMB), d => y(d.seconds)), [visible, x, y]);
@@ -32,17 +32,17 @@ export function ScatterChart({ data, hidden, scale, height, highlight }: { data:
     if (!brushRef.current || !width) return;
     const b = brushX().extent([[MARGIN.l, 2], [MARGIN.l + iw, 42]]).on('end', e => {
       if (!e.sourceEvent) return; const sel = e.selection as [number, number] | null;
-      setZoom(sel && sel[1] - sel[0] > 8 ? [Math.max(scale === 'log' ? 1 : 0, ox.invert(sel[0])), ox.invert(sel[1])] : null);
+      setZoom(sel && sel[1] - sel[0] > 8 ? [Math.max(0, ox.invert(sel[0])), ox.invert(sel[1])] : null);
     });
     brush.current = b as unknown as BrushBehavior<unknown>;
     const g = select(brushRef.current); g.call(b);
     return () => { g.on('.brush', null); };
-  }, [width, iw, ox, scale]);
+  }, [width, iw, ox]);
   useEffect(() => { if (!zoom && brushRef.current && brush.current) select(brushRef.current).call(brush.current.move as never, null); }, [zoom]);
 
   const fits = useMemo(() => LAYOUT_GROUPS.map(c => ({ c, f: linearFit(data.filter(d => d.layout === c).map(d => [d.inputMB, d.seconds])) })), [data]);
   const h = hover && visible.find(d => d.file === hover.file && d.layout === hover.layout && d.inputMB === hover.inputMB) || null;
-  const ticksX = x.ticks(scale === 'log' ? 6 : 7).filter((_t, i, a) => scale !== 'log' || i % Math.ceil(a.length / 7) === 0);
+  const ticksX = x.ticks(7);
 
   return (
     <div ref={ref} className={s.wrap}>

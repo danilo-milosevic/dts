@@ -15,6 +15,8 @@ import { Input } from '@/components/ui/Input';
 import { SwatchPicker } from '@/components/ui/Swatch';
 import { SideFooter, ThemeToggle } from '@/components/layout/SidePanel';
 import { bitrateOptions } from './inspectorOptions';
+import { useData } from '@/store/data';
+import { matchPreset } from '@/lib/format';
 import s from './SettingsPanel.module.css';
 
 function SettingsCard({ title, icon, children, action }: { title: string; icon: IconName; children: React.ReactNode; action?: React.ReactNode }) {
@@ -35,7 +37,22 @@ export function SettingsPanel() {
       setDevices([{ value: 'default', label: 'System default' }, ...(outs.length ? outs : [{ value: 'studio', label: 'Studio Display' }, { value: 'usb', label: 'USB Audio Interface' }])]);
     }).catch(() => undefined);
   }, []);
-  const saveServer = (patch: Partial<AppSettingsDto>) => { setServer(v => (v ? { ...v, ...patch, defaults: { ...v.defaults, ...(patch.defaults ?? {}) } } : v)); api.settings.update(server ? { ...patch, defaults: { ...server.defaults, ...(patch.defaults ?? {}) } } : patch).catch(e => toast({ tone: 'error', title: 'Could not save settings', message: String(e) })); };
+  const saveServer = (patch: Partial<AppSettingsDto>) => {
+    setServer(v => (v ? { ...v, ...patch, defaults: { ...v.defaults, ...(patch.defaults ?? {}) } } : v));
+    return api.settings.update(server ? { ...patch, defaults: { ...server.defaults, ...(patch.defaults ?? {}) } } : patch)
+      .then(saved => { setServer(saved); return saved; })
+      .catch(e => { toast({ tone: 'error', title: 'Could not save settings', message: String(e) }); return null; });
+  };
+  /** New default bitrate: saved for tracks added from now on; offer it to tracks that are not encoded yet. */
+  const setDefaultBitrate = async (kbps: number) => {
+    if (!server || !(await saveServer({ defaults: { ...server.defaults, bitrateKbps: kbps } }))) return;
+    const { tracks, presets, updateSettings } = useData.getState();
+    const pending = tracks.filter(t => (t.status === 'raw' || t.status === 'error') && t.settings.bitrateKbps !== kbps);
+    toast({
+      tone: 'success', title: `Default bitrate: ${kbps} kbps`, message: 'Used for tracks you add from now on.',
+      action: pending.length ? { label: `Apply to ${pending.length} unencoded track${pending.length === 1 ? '' : 's'}`, run: () => pending.forEach(t => { const s = { ...t.settings, bitrateKbps: kbps }; updateSettings(t.id, { bitrateKbps: kbps, presetId: matchPreset(s, presets) }); }) } : undefined,
+    }, pending.length ? 9000 : undefined);
+  };
   const d = server?.defaults;
 
   return (
@@ -64,7 +81,7 @@ export function SettingsPanel() {
         </SettingsCard>
         <SettingsCard title="Encoder defaults" icon="tune">
           {d ? <>
-            <Field label="Default bitrate" hint="DTS Core"><Select width={180} value={d.bitrateKbps} options={bitrateOptions} onChange={v => saveServer({ defaults: { ...d, bitrateKbps: v } })} /></Field>
+            <Field label="Default bitrate" hint="For newly added tracks"><Select width={180} value={d.bitrateKbps} options={bitrateOptions} onChange={setDefaultBitrate} /></Field>
             <Field label="Output folder" layout="stacked"><Input icon="folder_open" value={d.outputFolder} onChange={v => saveServer({ defaults: { ...d, outputFolder: v } })} aria-label="Output folder" /></Field>
           </> : <div className="skeleton" style={{ height: 160 }} />}
         </SettingsCard>

@@ -80,9 +80,3 @@ export const historicalEncodes: CompareStats['encodes'] = [
   ['Room_tone_5.1.wav', 'surround', 18, 4.1], ['Rain_5.1.wav', 'surround', 52, 9.0], ['Battle_7.1.wav', 'surround', 120, 19.6], ['VO_take12.wav', 'mono', 26, 4.4],
 ].map(([file, layout, inputMB, seconds]) => ({ file: file as string, layout: layout as LayoutGroup, inputMB: inputMB as number, seconds: seconds as number }));
 
-export const savingsCurve: CompareStats['savingsVsBitrate'] = {
-  stereo: { sourceKbps: 2304, points: [[384, 83.3], [768, 66.7], [1152, 50.0], [1509, 34.5]] },
-  surround: { sourceKbps: 6912, points: [[384, 94.4], [768, 88.9], [1152, 83.3], [1509, 78.2]] },
-  currentPresetKbps: 1509,
-};
-

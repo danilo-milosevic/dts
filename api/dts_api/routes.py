@@ -59,6 +59,13 @@ def app_settings() -> dict[str, Any]:
     return out
 
 
+def track_defaults(channels: int) -> dict[str, Any]:
+    """Encoder settings for a new track: the app defaults, a layout that fits the source, and the preset they match."""
+    s = {**app_settings()["defaults"], "layout": d.default_layout(channels)}
+    s["presetId"] = d.match_preset(s, list(reversed(store().all("presets"))))
+    return s
+
+
 def body() -> dict[str, Any]:
     data = request.get_json(silent=True)
     return data if isinstance(data, dict) else {}
@@ -114,7 +121,7 @@ def upload_tracks():
         t = {"id": tid, "name": unique_name(name), "format": "BWF" if name.lower().endswith(".bwf") else "WAV",
              "sizeBytes": dest.stat().st_size, **meta, "layout": d.layout_label(meta["channels"]),
              "status": "raw", "createdAt": d.now(),
-             "settings": {**app_settings()["defaults"], "layout": d.default_layout(meta["channels"])},
+             "settings": track_defaults(meta["channels"]),
              "_source": str(rel)}
         store().put("tracks", t, pos=base + len(files) - i)
         created.append(public(t))
@@ -263,6 +270,8 @@ def put_settings():
             cur[k] = b[k]
     if isinstance(b.get("defaults"), dict):
         cur["defaults"] = d.merge_settings(cur["defaults"], b["defaults"])
+        # the defaults name a preset only while they still match it
+        cur["defaults"]["presetId"] = d.match_preset(cur["defaults"], list(reversed(store().all("presets"))))
     store().kv_set("settings", cur)
     return jsonify(cur)
 
@@ -408,4 +417,4 @@ def compare_stats():
                 "status": "done" if j["status"] == "done" else "failed", **({"reason": j["error"]} if j.get("error") else {}),
                 "durationSec": tracks.get(j["trackId"], {}).get("durationSec", 0), "encodeSeconds": j.get("encodeSeconds")}
                for j in jobs if not j.get("_cleared") and j["trackId"] in tracks]
-    return jsonify({"encodes": encodes, "savingsVsBitrate": d.savings_curve(int(app_settings()["defaults"]["bitrateKbps"])), "sessionFiles": session})
+    return jsonify({"encodes": encodes, "sessionFiles": session})

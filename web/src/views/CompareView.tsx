@@ -12,7 +12,6 @@ import { Tag } from '@/components/ui/Tag';
 import { CardHeader } from '@/components/ui/Card';
 import { Legend } from '@/components/ui/Legend';
 import { ScatterChart } from '@/components/charts/ScatterChart';
-import { SavingsCurve } from '@/components/charts/SavingsCurve';
 import { SavingsBars } from '@/components/charts/SavingsBars';
 import { Sparkline } from '@/components/charts/Sparkline';
 import { LAYOUT_GROUPS, layoutLegend, layoutToneVar } from '@/components/charts/useChartScales';
@@ -35,11 +34,9 @@ function Kpi({ label, value, valueColor, tag, tagTone, spark, sparkColor }: { la
 export function CompareView() {
   const [stats, setStats] = useState<CompareStats | null>(null);
   const doneCount = useData(d => d.jobs.filter(j => j.status === 'done' || j.status === 'failed').length);
-  const track = useData(selectedTrack); const updateSettings = useData(d => d.updateSettings); const select = useData(d => d.select);
+  const track = useData(selectedTrack); const select = useData(d => d.select);
   const group = useUi(u => u.compareLayout); const setUi = useUi(u => u.set); const toast = useUi(u => u.toast);
   const [hiddenScatter, setHiddenScatter] = useState<string[]>([]);
-  const [hiddenCurve, setHiddenCurve] = useState<string[]>([]);
-  const [scale, setScale] = useState<'linear' | 'log'>('linear');
   const [mode, setMode] = useState<'percent' | 'mb'>('percent');
   const [sort, setSort] = useState<'savings' | 'size' | 'name'>('savings');
   const nav = useNavigate();
@@ -56,7 +53,6 @@ export function CompareView() {
   const encTime = ok.reduce((a, f) => a + (f.encodeSeconds ?? 0), 0);
   const encodes = useMemo(() => (stats?.encodes ?? []).filter(e => group === 'all' || e.layout === group), [stats, group]);
   const cumulative = ok.reduce<number[]>((acc, f) => [...acc, (acc[acc.length - 1] ?? 0) + f.inputMB - (f.outputMB ?? 0)], [0]);
-  const preset = track ? track.settings.bitrateKbps : null;
 
   return (
     <Workspace actions={<>
@@ -76,18 +72,11 @@ export function CompareView() {
         <Kpi label="Total encode time" value={fmtDuration(encTime)} tag={`${ok.length} files`} tagTone="neutral" />
       </div>
 
-      <div className={s.row}>
-        <section className={s.card}>
-          <CardHeader title="Encode time vs file size" sub="Each dot is one encode · dashed lines are linear fits · hover a dot for details"
-            right={<><Legend items={layoutLegend} hidden={hiddenScatter} onToggle={k => setHiddenScatter(h => (h.includes(k) ? h.filter(x => x !== k) : [...h, k]))} /><Segmented value={scale} onChange={setScale} options={[{ value: 'linear', label: 'Linear' }, { value: 'log', label: 'Log' }]} /></>} />
-          {stats ? <ScatterChart data={encodes} hidden={hiddenScatter} scale={scale} height={300} highlight={track?.name} /> : <div className="skeleton" style={{ height: 356 }} />}
-        </section>
-        <section className={s.card}>
-          <CardHeader title="Savings vs bitrate" sub="DTS Core at 48 kHz · drag the preset to change the selected track"
-            right={<Legend items={[{ key: 'stereo', label: 'Stereo', tone: 'accent' }, { key: 'surround', label: '5.1', tone: 'dts' }]} hidden={hiddenCurve} onToggle={k => setHiddenCurve(h => (h.includes(k) ? h.filter(x => x !== k) : [...h, k]))} />} />
-          {stats ? <SavingsCurve data={stats.savingsVsBitrate} hidden={hiddenCurve} height={356} preset={preset} onPreset={kbps => { if (track) { updateSettings(track.id, { bitrateKbps: kbps }); toast({ tone: 'info', title: `${track.name}: bitrate set to ${kbps} kbps` }); } }} /> : <div className="skeleton" style={{ height: 356 }} />}
-        </section>
-      </div>
+      <section className={s.card}>
+        <CardHeader title="Encode time vs file size" sub="Each dot is one encode · dashed lines are linear fits · hover a dot for details"
+          right={<><Legend items={layoutLegend} hidden={hiddenScatter} onToggle={k => setHiddenScatter(h => (h.includes(k) ? h.filter(x => x !== k) : [...h, k]))} /></>} />
+        {stats ? <ScatterChart data={encodes} hidden={hiddenScatter} height={300} highlight={track?.name} /> : <div className="skeleton" style={{ height: 356 }} />}
+      </section>
 
       <div className={s.row}>
         <section className={s.card}>

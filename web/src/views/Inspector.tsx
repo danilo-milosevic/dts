@@ -29,7 +29,7 @@ export function Inspector({ track, onClose }: { track: Track; onClose?: () => vo
   const est = estimateOutput(track, st);
   const busy = track.status === 'queued' || track.status === 'encoding';
   const presetValue = st.presetId ?? 'custom';
-  const presetOpts = [...presets.map(p => ({ value: p.id, label: `Preset · ${p.name}`, hint: p.description })), ...(st.presetId ? [] : [{ value: 'custom', label: 'Preset · Custom (modified)' }])];
+  const presetOpts = [...presets.map(p => ({ value: p.id, label: `Preset · ${p.name}`, hint: p.description })), ...(st.presetId ? [] : [{ value: 'custom', label: 'Preset · Custom' }])];
   const maxBitrate = track.bitrateKbps;
 
   // bitrates below the encoder's minimum for the output layout are disabled

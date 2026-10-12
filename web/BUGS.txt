@@ -15,3 +15,4 @@
 - ✓ Remove savings vs bitrate graph in Compare tab - its just static
 - ✓ Setting a default bitrate does nothing, it stil choses the first default (1509)
 - ✓ Remove linear and log from encode time vs file size, log is bit confusing, only keep linear
+- ✓ Remove "recent folders" from start page, they dont even exist

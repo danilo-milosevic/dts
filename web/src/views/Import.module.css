@@ -9,7 +9,4 @@
 }
 .preset:hover { border-color: var(--accent-primary); transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .presetActive { border-color: var(--accent-primary); background: var(--bg-accent-soft); }
-.recent { width: min(800px, 100%); display: flex; flex-direction: column; gap: var(--space-8); }
-.folder { display: flex; align-items: center; gap: var(--space-12); padding: var(--space-12) var(--space-16); background: var(--bg-card); border-radius: var(--radius-md); text-align: left; transition: background-color var(--dur-fast); }
-.folder:hover { background: var(--bg-hover); }
 @media (max-width: 1400px) { .presets { grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(800px, 100%); } }

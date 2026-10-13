@@ -9,7 +9,7 @@ export function useTrackAudio(track: Track | null) {
   const [source, setSource] = useState<AudioBuffer | null>(null);
   const [output, setOutput] = useState<AudioBuffer | null>(null);
   const id = track?.id;
-  const outKey = track ? `${track.output?.sizeBytes ?? 'pre'}:${track.output?.bitrateKbps ?? track.settings.bitrateKbps}:${track.settings.layout}` : '';
+  const outKey = track ? `${track.output?.sizeBytes ?? 'pre'}:${track.output?.bitrateKbps ?? track.settings.bitrateKbps}:${track.settings.layout}:${track.settings.downmix}` : '';
 
   useEffect(() => {
     let live = true; setSource(null); if (!track) return;

@@ -12,6 +12,7 @@ services:
       DTS_WORKERS: "4"          # parallel encodes
       DTS_MAX_UPLOAD_MB: "8192"
     init: true                  # forwards Ctrl+C / docker stop to the server so ffmpeg jobs stop cleanly
+    stop_grace_period: 30s      # time to finish the current encode / benchmark step before being killed
     restart: unless-stopped
 
 volumes:

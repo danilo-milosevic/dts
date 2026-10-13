@@ -16,6 +16,7 @@ from typing import Any
 
 from .config import Config
 from .domain import now
+from .benchmark import Benchmark
 from .media import MediaError, decode_to_wav, pcm_codec, plan_encode
 from .store import Store
 
@@ -80,6 +81,8 @@ class EncodeQueue:
             self.cond.notify_all()
         for p in list(self._procs.values()):
             p.kill()
+        for th in self._threads:  # let workers finish their current step (benchmarks stop between formats)
+            th.join(timeout=15)
 
     def cancel(self, job_id: str) -> None:
         """Stop a running encode (the caller removes the job)."""
@@ -209,6 +212,24 @@ class EncodeQueue:
             self.store.put("jobs", j)
             self.store.put("tracks", t)
         log.info("encode %s: %.2fs → %d bytes; decode %s s → %s bytes", job["id"], encode_seconds, size, decode_seconds, decoded_bytes)
+        self._benchmark(job["id"], track, src, plan)
+
+    def _benchmark(self, job_id: str, track: dict[str, Any], src: Path, plan: Any) -> None:
+        """Compress + decompress the same input with other formats, for the Compare page. Runs after the DTS result is
+        saved, so the DTS file is available right away; the job's `benchmarkStatus` goes running → done."""
+        settings = self.store.kv_get("settings") or {}
+        if not settings.get("benchmarkFormats", True):
+            return
+        self.store.update("jobs", job_id, benchmarkStatus="running", benchmarks=[])
+        bench = Benchmark(self.cfg.ffmpeg, self.cfg.storage / "outputs" / track["id"] / ".bench",
+                          should_stop=lambda: self._stop or not self.store.get("jobs", job_id))
+        try:
+            results = bench.run(src, plan.layout_graph, plan.channels, plan.sample_rate, pcm_codec(track))
+        finally:
+            remove_tree(bench.work_dir)
+        if self.store.get("jobs", job_id):
+            self.store.update("jobs", job_id, benchmarks=results, benchmarkStatus="done" if len(results) == len(bench.formats) else "partial")
+        log.info("benchmark %s: %s", job_id, ", ".join(f"{r['label']} {r['sizeBytes']}" for r in results))
 
     def _fail(self, job_id: str, message: str) -> None:
         with self.store.tx():

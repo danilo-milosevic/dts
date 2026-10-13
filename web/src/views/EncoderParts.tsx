@@ -3,7 +3,8 @@ import { scaleLinear } from 'd3';
 import type { Track } from '@/api/types';
 import { useUi, type StftUi } from '@/store/ui';
 import { useElementSize } from '@/hooks/useElementSize';
-import { ChannelLane, channelNames } from '@/components/audio/ChannelLane';
+import { ChannelLane, channelNames, channelNamesFor } from '@/components/audio/ChannelLane';
+import { outputChannelCount } from '@/audio/layout';
 import { Segmented } from '@/components/ui/Segmented';
 import { Select } from '@/components/ui/Select';
 import { Slider } from '@/components/ui/Slider';
@@ -22,13 +23,18 @@ export function TimeRuler({ duration }: { duration: number }) {
   );
 }
 
-export function Lanes({ track, buffer, compare, tone, which, view, mix, mono }: { track: Track; buffer: AudioBuffer | null; compare?: AudioBuffer | null; tone: 'source' | 'dts'; which: Which; view: 'waveform' | 'spectrogram'; mix?: boolean; mono?: boolean }) {
-  const names = channelNames[track.layout] ?? channelNames.Stereo;
+/**
+ * Channel lanes. Source: one lane per source channel (a single "Mono" lane when the track is converted to mono, since
+ * playback is downmixed). DTS output: one lane per channel of the output — the decoded encode, or the preview of the
+ * current layout settings (e.g. 5.1 → 2.0 shows two lanes, 2.0 → 5.1 six).
+ */
+export function Lanes({ track, buffer, compare, tone, which, view, mono }: { track: Track; buffer: AudioBuffer | null; compare?: AudioBuffer | null; tone: 'source' | 'dts'; which: Which; view: 'waveform' | 'spectrogram'; mono?: boolean }) {
   const idleDb = track.loudnessLufs - 2;
-  if (mix || mono) return <div className={s.lanes}><ChannelLane trackId={track.id} channel={0} channels={1} name={mono ? 'Mono' : 'Mix'} position={mono ? `${track.layout} → mono downmix` : track.channels > 1 ? `${track.layout} → stereo preview` : 'Mono'} buffer={buffer} compare={compare} tone={tone} which={which} view={view} idleDb={idleDb} mix /></div>;
+  if (tone === 'source' && mono) return <div className={s.lanes}><ChannelLane trackId={track.id} channel={0} channels={1} name="Mono" position={`${track.layout} → mono downmix`} buffer={buffer} compare={compare} tone={tone} which={which} view={view} idleDb={idleDb} mix /></div>;
+  const names = tone === 'dts' ? channelNamesFor(buffer?.numberOfChannels ?? outputChannelCount(track)) : channelNames[track.layout] ?? channelNames.Stereo;
   return (
     <div className={s.lanes}>
-      {names.map(([n, p], ch) => <ChannelLane key={ch} trackId={track.id} channel={ch} channels={names.length} name={n} position={p} buffer={buffer} tone={tone} which={which} view={view} idleDb={idleDb - (p === 'LFE' ? 6 : 0)} />)}
+      {names.map(([n, p], ch) => <ChannelLane key={`${names.length}:${ch}`} trackId={track.id} channel={ch} channels={names.length} name={n} position={p} buffer={buffer} compare={compare && buffer && compare.numberOfChannels === buffer.numberOfChannels ? compare : undefined} tone={tone} which={which} view={view} idleDb={idleDb - (p === 'LFE' ? 6 : 0)} />)}
     </div>
   );
 }

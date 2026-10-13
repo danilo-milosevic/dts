@@ -136,7 +136,7 @@ export function EncoderView() {
                 {encoded && track.output!.decodedBytes != null && <Stat label="Decoded WAV" value={fmtMB(track.output!.decodedBytes)} />}
                 <Stat label="Bandwidth" value={`${st.bitrateKbps >= 1500 ? 20 : st.bitrateKbps >= 768 ? 16 : 12} kHz`} tone={st.bitrateKbps < 768 ? 'warning' : undefined} />
               </div>
-              <Lanes track={track} buffer={output} compare={view === 'spectrogram' && outputView === 'difference' ? source : undefined} tone="dts" which="dts" view={view} mix mono={mono} />
+              <Lanes track={track} buffer={output} compare={view === 'spectrogram' && outputView === 'difference' ? source : undefined} tone="dts" which="dts" view={view} />
             </section>
         </div>
         <Button variant="ghost" icon="queue_music" onClick={() => nav('/queue')} style={{ alignSelf: 'flex-start' }}>Open queue</Button>

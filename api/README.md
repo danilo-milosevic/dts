@@ -38,7 +38,8 @@ dts_api/
   __init__.py          create_app(): store, queue, STFT cache, error handling, CORS, serves ../web/dist
   routes.py            every endpoint in web/API.md
   store.py             SQLite: one JSON document per track / job / preset (+ key-value for settings, queue state)
-  worker.py            EncodeQueue: N threads claim the next queued job and run ffmpeg
+  worker.py            EncodeQueue: N threads claim the next queued job and run ffmpeg (encode → decode → format benchmark)
+  benchmark.py         FLAC / AC-3 / AAC / MP3 / Opus compress + decompress of the same input, numbers only
   media.py             ffprobe analysis, EBU R128 loudness/true peak, the ffmpeg command, DTS → WAV decode, PCM decode for STFT
   stft.py              numpy STFT binned to the client's pixel grid, LRU-cached
   domain.py            defaults, presets, capabilities, naming helpers
@@ -52,7 +53,7 @@ storage/
 - **One process, no broker.** The queue is the `jobs` table. Worker threads wait on a condition variable, claim the lowest `order` queued job in a transaction, and run ffmpeg with `-progress pipe:1`. Progress and ETA are written back about every 250 ms. Pause/resume is a flag the workers check before claiming. Cancel terminates the ffmpeg process. Jobs left `encoding` after a crash go back to the queue on start.
 - **Encoding** (`media.plan_encode`) maps `EncodeSettings` to one ffmpeg filter graph:
   - Layout and downmix: Lo/Ro, Lt/Rt via `matrix_encoding=dolby`, or plain L/R.
-  - Generate LFE: 80 Hz low-pass of L+R when turning stereo into 5.1.
+  - 5.1 from mono / stereo: stereo on L/R, mono on C, LFE from the input's bass (80 Hz low-pass), surrounds silent.
   - Resampling to ≤ 48 kHz.
   - DRC through `acompressor`, and a −1 dB ceiling `alimiter`.
   - Then `-c:a dca -b:a <kbps>k`, written to `.dts`, or to `.dts.wav` (DTS-in-WAV).

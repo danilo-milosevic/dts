@@ -6,10 +6,6 @@ export const optionHelp = {
     <span><b>Lt/Rt</b> — matrix-encoded stereo. Sounds like normal stereo, but a Dolby Pro Logic receiver can unfold it back into surround.</span>
     <span><b>None</b> — keeps only front left and right; centre, LFE and surrounds are dropped.</span>
   </>,
-  generateLfe: <>
-    <span>Only used when a <b>stereo</b> source is encoded as <b>5.1</b>: creates the subwoofer (LFE) channel from left + right, low-passed at 80 Hz.</span>
-    <span>Left and right stay as they are; centre and surround channels stay silent. Off: a stereo source is encoded as stereo even when 5.1 is selected.</span>
-  </>,
   drc: <>
     <span>Narrows the gap between loud and quiet parts before encoding, so quiet passages stay audible at low volume. It is applied to the audio and can't be undone by the player.</span>
     <span><b>None</b> keeps the full dynamics. <b>Film / Music light</b> are gentle, <b>standard</b> is stronger, <b>Speech</b> is the strongest and suits dialogue and voice-over.</span>

@@ -43,7 +43,6 @@ export interface EncodeSettings {
   bitDepth: 16 | 24;
   layout: '1.0' | '2.0' | '5.1' | '7.1' | 'auto';
   downmix: 'loro' | 'ltrt' | 'none';
-  generateLfe: boolean;
   drc: 'none' | 'film-light' | 'film-standard' | 'music-light' | 'music-standard' | 'speech';
   limiter: boolean;
   container: 'dts' | 'wav';
@@ -71,6 +70,9 @@ export interface Job {
   /** Decoding the DTS result back to WAV (filled when done). */
   decodeSeconds?: number | null;
   decodedBytes?: number | null;
+  /** Format benchmark that runs after the DTS encode (see BenchmarkResult). Absent when turned off. */
+  benchmarkStatus?: 'running' | 'done' | 'partial';
+  benchmarks?: BenchmarkResult[];
   createdAt: string;
   startedAt: string | null;
   finishedAt: string | null;
@@ -87,10 +89,11 @@ export interface QueueState { running: boolean; workers: number; maxWorkers: num
 export interface EncodeSample { file: string; layout: LayoutGroup; inputMB: number; seconds: number; decodeSeconds?: number | null; }
 export interface CompareStats {
   encodes: EncodeSample[];
-  sessionFiles: { trackId: string; file: string; layout: LayoutGroup; inputMB: number; outputMB: number | null; status: 'done' | 'failed'; reason?: string; durationSec: number; encodeSeconds: number | null; decodeSeconds?: number | null; decodedMB?: number | null }[];
+  sessionFiles: { trackId: string; file: string; layout: LayoutGroup; inputMB: number; outputMB: number | null; status: 'done' | 'failed'; reason?: string; durationSec: number; encodeSeconds: number | null; decodeSeconds?: number | null; decodedMB?: number | null;
+    inputBytes?: number; outputBytes?: number | null; decodedBytes?: number | null; benchmarkStatus?: Job['benchmarkStatus']; benchmarks?: BenchmarkResult[] }[];
 }
 
-export interface AppSettingsDto { outputDevice: string; bufferSize: number; previewAfterEncode: boolean; defaults: EncodeSettings; }
+export interface AppSettingsDto { outputDevice: string; bufferSize: number; previewAfterEncode: boolean; /** Also benchmark FLAC, AC-3, AAC, MP3, Opus after each encode. */ benchmarkFormats?: boolean; defaults: EncodeSettings; }
 
 /** Limits of the server's encoder (GET /api/capabilities), used to disable options the encoder would reject. */
 export interface Capabilities {
@@ -103,4 +106,22 @@ export interface Capabilities {
   bitrateKbps: { min: Record<string, number>; max: number };
   /** Explanations for layouts the encoder adapts (e.g. 7.1 → 5.1). */
   layoutNotes: Partial<Record<EncodeSettings['layout'], string>>;
+}
+
+/** One codec compressing + decompressing the same input as the DTS encode (same channels / sample rate where the codec allows). */
+export interface BenchmarkResult {
+  format: 'flac' | 'ac3' | 'aac' | 'mp3' | 'opus';
+  label: string;
+  description: string;
+  lossless: boolean;
+  channels: number;
+  sampleRate: number;
+  bitrateKbps: number | null;
+  sizeBytes: number | null;
+  encodeSeconds: number | null;
+  decodeSeconds: number | null;
+  decodedBytes: number | null;
+  /** e.g. "MP3 carries at most 2 ch — downmixed from 6" */
+  note: string | null;
+  error: string | null;
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { engine, usePlayer } from '@/audio/engine';
+import { engine, usePlayer, type Which } from '@/audio/engine';
 import s from './Meter.module.css';
 
 const SEGMENTS = 18;
@@ -11,9 +11,10 @@ const litFor = (db: number) => Math.max(0, Math.min(SEGMENTS, Math.round(((db - 
  * Segmented peak meter. While the given track plays it follows the live analyser of `channel`;
  * otherwise it shows the static `idleDb` (the track's measured level).
  */
-export function Meter({ trackId, channels, idleDb = -60 }: { trackId: string; channels: number[]; idleDb?: number }) {
+export function Meter({ trackId, channels, idleDb = -60, which }: { trackId: string; channels: number[]; idleDb?: number; which?: Which }) {
   const cols = useRef<(HTMLDivElement | null)[]>([]);
-  const playing = usePlayer(p => p.playing && p.trackId === trackId);
+  // live only while this lane's audio (source or DTS output) is the one playing
+  const playing = usePlayer(p => p.playing && p.trackId === trackId && (!which || p.which === which));
 
   useEffect(() => {
     const paint = (col: HTMLDivElement | null, db: number, hold: number) => {

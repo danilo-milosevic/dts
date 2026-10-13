@@ -36,7 +36,6 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "bitDepth": 24,
     "layout": "2.0",
     "downmix": "loro",
-    "generateLfe": False,
     "drc": "none",
     "limiter": True,
     "container": "dts",
@@ -48,6 +47,8 @@ DEFAULT_APP_SETTINGS: dict[str, Any] = {
     "outputDevice": "default",
     "bufferSize": 512,
     "previewAfterEncode": True,
+    #: after each DTS encode, also compress/decompress with FLAC, AC-3, AAC, MP3 and Opus for the Compare page
+    "benchmarkFormats": True,
     "defaults": DEFAULT_SETTINGS,
 }
 

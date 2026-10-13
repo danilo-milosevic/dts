@@ -8,7 +8,6 @@ export const defaultSettings: EncodeSettings = {
   bitDepth: 24,
   layout: '2.0',
   downmix: 'loro',
-  generateLfe: false,
   drc: 'film-standard',
   limiter: true,
   container: 'dts',

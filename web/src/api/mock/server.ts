@@ -2,7 +2,7 @@
  * In-browser mock backend. Implements every endpoint in API.md against an in-memory DB,
  * including a simulated encode queue that advances in real time.
  */
-import type { AppSettingsDto, Capabilities, CompareStats, EncodeSettings, Job, Preset, QueueState, Track } from '../types';
+import type { AppSettingsDto, BenchmarkResult, Capabilities, CompareStats, EncodeSettings, Job, Preset, QueueState, Track } from '../types';
 import { defaultSettings, historicalEncodes, presets, seedJobs, seedTracks } from './seed';
 import { MB, estimateOutput, layoutChannels, layoutGroupOf, matchPreset, outputName, presetLabel, uid } from '@/lib/format';
 import { audioCache } from '@/audio/cache';
@@ -16,6 +16,8 @@ const db = {
   settings: { outputDevice: 'default', bufferSize: 512, previewAfterEncode: true, defaults: { ...defaultSettings } } as AppSettingsDto,
 };
 db.jobs = seedJobs(db.tracks);
+// seeded finished encodes get decode numbers and a format benchmark too (mockBenchmarks is hoisted)
+queueMicrotask(() => db.jobs.filter(j => j.status === 'done').forEach(j => { const t = db.tracks.find(x => x.id === j.trackId); if (!t) return; j.decodeSeconds = +((j.encodeSeconds ?? 1) / 6).toFixed(2); j.decodedBytes = Math.round((Math.min(t.sampleRate, 48000) * t.bitDepth * Math.min(6, layoutChannels(j.settings.layout, t)) * t.durationSec) / 8); j.benchmarks = mockBenchmarks(t, j); j.benchmarkStatus = 'done'; if (t.output) Object.assign(t.output, { decodeSeconds: j.decodeSeconds, decodedBytes: j.decodedBytes }); }));
 
 const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x));
 /** Settings name a preset only while they match it. */
@@ -53,6 +55,7 @@ setInterval(() => {
       const est = estimateOutput(t, j.settings);
       j.status = 'done'; j.etaSec = null; j.finishedAt = now(); j.outputBytes = Math.round(est.bytes); j.ratio = est.ratio; j.encodeSeconds = est.encodeSec;
       // simulated decode back to WAV: ~1/6 of the encode time, PCM at the output layout
+      j.benchmarks = mockBenchmarks(t, j); j.benchmarkStatus = 'done';
       j.decodeSeconds = +(est.encodeSec / 6).toFixed(2); j.decodedBytes = Math.round((Math.min(t.sampleRate, 48000) * t.bitDepth * layoutChannels(j.settings.layout, t) * t.durationSec) / 8);
       t.status = 'encoded'; t.error = undefined;
       t.output = { fileName: j.outputName, sizeBytes: j.outputBytes, codec: j.settings.codec, bitrateKbps: j.settings.bitrateKbps, encodeSeconds: est.encodeSec, decodeSeconds: j.decodeSeconds, decodedBytes: j.decodedBytes };
@@ -141,11 +144,28 @@ route('POST', '/api/queue/start', () => { db.queue.running = true; db.queue.star
 route('POST', '/api/queue/pause', () => { db.queue.running = false; return db.queue; });
 
 
+/** Plausible numbers for the format comparison (the real server measures them with ffmpeg). */
+function mockBenchmarks(t: Track, j: Job): BenchmarkResult[] {
+  const ch = Math.min(6, layoutChannels(j.settings.layout, t)); const sr = Math.min(48000, t.sampleRate); const sec = t.durationSec;
+  const pcm = (c: number) => Math.round((sr * t.bitDepth * c * sec) / 8);
+  const enc = estimateOutput(t, j.settings).encodeSec;
+  const f = (format: BenchmarkResult['format'], label: string, description: string, c: number, kbps: number | null, size: number, encK: number, decK: number, note: string | null = null): BenchmarkResult =>
+    ({ format, label, description, lossless: kbps == null, channels: c, sampleRate: sr, bitrateKbps: kbps, sizeBytes: Math.round(size), encodeSeconds: +(enc * encK).toFixed(2), decodeSeconds: +(enc * decK).toFixed(2), decodedBytes: pcm(c), note, error: null });
+  const aac = ch === 1 ? 128 : ch === 2 ? 256 : Math.min(512, 85 * ch), ac3 = ch === 1 ? 192 : ch === 2 ? 384 : 640;
+  return [
+    f('flac', 'FLAC', 'Lossless — bit-identical after decoding', ch, null, pcm(ch) * 0.58, 0.35, 0.12),
+    f('ac3', 'AC-3', 'Dolby Digital — the other common disc / broadcast surround codec', ch, ac3, (ac3 * 1000 * sec) / 8, 0.25, 0.1),
+    f('aac', 'AAC', 'Streaming and video standard (ffmpeg native encoder)', ch, aac, (aac * 1000 * sec) / 8, 0.9, 0.12),
+    f('mp3', 'MP3', 'Most compatible lossy format — stereo at most', Math.min(2, ch), ch === 1 ? 160 : 320, ((ch === 1 ? 160 : 320) * 1000 * sec) / 8, 0.5, 0.1, ch > 2 ? `MP3 carries at most 2 ch — downmixed from ${ch}` : null),
+    f('opus', 'Opus', 'Modern lossy codec (low latency, high efficiency)', ch, 64 * ch, (64 * ch * 1000 * sec) / 8, 0.45, 0.15),
+  ];
+}
+
 /** Output channel group of a job (what the Compare page groups by). */
 const groupOf = (j: Job) => { const t = db.tracks.find(x => x.id === j.trackId); return layoutGroupOf(t ? layoutChannels(j.settings.layout, t) : 2); };
 route('GET', '/api/stats/compare', () => {
   const done = db.jobs.filter(j => j.status === 'done' || j.status === 'failed');
-  const sessionFiles: CompareStats['sessionFiles'] = done.map(j => { const t = db.tracks.find(x => x.id === j.trackId); return { trackId: j.trackId, file: j.trackName, layout: groupOf(j), inputMB: +(j.inputBytes / MB).toFixed(1), outputMB: j.outputBytes ? +(j.outputBytes / MB).toFixed(2) : null, status: j.status === 'done' ? 'done' : 'failed', reason: j.error ?? undefined, durationSec: t?.durationSec ?? 0, encodeSeconds: j.encodeSeconds, decodeSeconds: j.decodeSeconds ?? null, decodedMB: j.decodedBytes ? +(j.decodedBytes / MB).toFixed(2) : null }; });
+  const sessionFiles: CompareStats['sessionFiles'] = done.map(j => { const t = db.tracks.find(x => x.id === j.trackId); return { trackId: j.trackId, file: j.trackName, layout: groupOf(j), inputMB: +(j.inputBytes / MB).toFixed(1), outputMB: j.outputBytes ? +(j.outputBytes / MB).toFixed(2) : null, status: j.status === 'done' ? 'done' : 'failed', reason: j.error ?? undefined, durationSec: t?.durationSec ?? 0, encodeSeconds: j.encodeSeconds, decodeSeconds: j.decodeSeconds ?? null, decodedMB: j.decodedBytes ? +(j.decodedBytes / MB).toFixed(2) : null, inputBytes: j.inputBytes, outputBytes: j.outputBytes, decodedBytes: j.decodedBytes ?? null, benchmarkStatus: j.benchmarkStatus, benchmarks: j.benchmarks ?? [] }; });
   const encodes = [...historicalEncodes, ...done.filter(j => j.status === 'done').map(j => ({ file: j.trackName, layout: groupOf(j), inputMB: +(j.inputBytes / MB).toFixed(1), seconds: +(j.encodeSeconds ?? 0).toFixed(1), decodeSeconds: j.decodeSeconds ?? null }))];
   return { encodes, sessionFiles } satisfies CompareStats;
 });

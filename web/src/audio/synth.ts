@@ -3,7 +3,8 @@
  * DTS decode, so waveforms, meters, playback and the STFT view work without a backend.
  * Real uploads skip this and use the decoded file.
  */
-import type { Track } from '@/api/types';
+import type { EncodeSettings, Track } from '@/api/types';
+import { mixMatrix } from './layout';
 import type { SynthRequest, SynthResponse } from './synth.worker';
 
 /** Preview sample rate: full 48 kHz for short files, 24 kHz for long ones to keep memory low. */
@@ -23,13 +24,26 @@ export async function synthesizeTrack(t: Track): Promise<AudioBuffer> {
   return buf;
 }
 
-/** Preview of a DTS Core encode before it exists: the source band-limited the way the bitrate would (mono = downmixed). */
-export async function simulateDtsOutput(src: AudioBuffer, kbps: number, mono = false): Promise<AudioBuffer> {
-  // a 1-channel destination downmixes the source to mono
-  const ctx = new OfflineAudioContext(mono ? 1 : src.numberOfChannels, src.length, src.sampleRate);
+/**
+ * Preview of a DTS Core encode before it exists: the source routed to the output channel layout of the current
+ * settings (same rules as the server, see layout.ts) and band-limited the way the bitrate would.
+ */
+export async function simulateDtsOutput(src: AudioBuffer, kbps: number, layout: Pick<EncodeSettings, 'layout' | 'downmix'>): Promise<AudioBuffer> {
+  const { rows, lfe } = mixMatrix(src.numberOfChannels, layout);
+  const ctx = new OfflineAudioContext(rows.length, src.length, src.sampleRate);
+  ctx.destination.channelCountMode = 'explicit'; ctx.destination.channelInterpretation = 'discrete';
   const s = ctx.createBufferSource(); s.buffer = src;
   const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = Math.min(src.sampleRate / 2 - 100, kbps >= 1500 ? 20000 : kbps >= 768 ? 16000 : 12000);
   const shelf = ctx.createBiquadFilter(); shelf.type = 'highshelf'; shelf.frequency.value = 14000; shelf.gain.value = kbps >= 1500 ? -2 : -6;
-  s.connect(lp); lp.connect(shelf); shelf.connect(ctx.destination); s.start();
+  const split = ctx.createChannelSplitter(src.numberOfChannels);
+  const merge = ctx.createChannelMerger(rows.length);
+  s.connect(lp); lp.connect(shelf); shelf.connect(split);
+  rows.forEach((row, o) => row.forEach((w, i) => { if (!w) return; const g = ctx.createGain(); g.gain.value = w; split.connect(g, i); g.connect(merge, 0, o); }));
+  if (lfe) { // generated LFE: low-passed sum of the input
+    const sum = ctx.createGain(); const lfeLp = ctx.createBiquadFilter(); lfeLp.type = 'lowpass'; lfeLp.frequency.value = 80;
+    lfe.weights.forEach((w, i) => { const g = ctx.createGain(); g.gain.value = w; split.connect(g, i); g.connect(sum); });
+    sum.connect(lfeLp); lfeLp.connect(merge, 0, lfe.out);
+  }
+  merge.connect(ctx.destination); s.start();
   return ctx.startRendering();
 }

@@ -82,6 +82,7 @@ export function SettingsPanel() {
         <SettingsCard title="Encoder defaults" icon="tune">
           {d ? <>
             <Field label="Default bitrate" hint="For newly added tracks"><Select width={180} value={d.bitrateKbps} options={bitrateOptions} onChange={setDefaultBitrate} /></Field>
+            <Field label="Benchmark other formats" hint="FLAC, AC-3, AAC, MP3, Opus after each encode — for Compare"><Toggle checked={server?.benchmarkFormats ?? true} onChange={v => saveServer({ benchmarkFormats: v })} label="Benchmark other formats" /></Field>
             <Field label="Output folder" layout="stacked"><Input icon="folder_open" value={d.outputFolder} onChange={v => saveServer({ defaults: { ...d, outputFolder: v } })} aria-label="Output folder" /></Field>
           </> : <div className="skeleton" style={{ height: 160 }} />}
         </SettingsCard>

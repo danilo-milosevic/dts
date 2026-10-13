@@ -60,7 +60,6 @@ export function Inspector({ track, onClose }: { track: Track; onClose?: () => vo
         <Section title="Channels">
           <Field label="Layout"><Segmented value={st.layout} onChange={v => up({ layout: v })} options={[{ value: '1.0', label: 'Mono' }, { value: '2.0', label: '2.0' }, { value: '5.1', label: '5.1' }, { value: '7.1', label: '7.1', title: caps?.layoutNotes['7.1'] }, { value: 'auto', label: 'Auto' }]} /></Field>
           <Field label="Downmix" info={optionHelp.downmix} hint={track.channels > 2 ? undefined : 'Only for multichannel sources'}><Select width={W} disabled={track.channels <= 2 && st.layout !== '2.0'} value={st.downmix} options={downmixOptions} onChange={v => up({ downmix: v })} /></Field>
-          <Field label="Generate LFE" info={optionHelp.generateLfe} hint="Stereo → 5.1 only"><Toggle checked={st.generateLfe} onChange={v => up({ generateLfe: v })} label="Generate LFE" /></Field>
         </Section>
         <Section title="Loudness & dynamics">
           <Field label="Dynamic range" info={optionHelp.drc}><Select width={W} value={st.drc} options={drcOptions} onChange={v => up({ drc: v })} /></Field>

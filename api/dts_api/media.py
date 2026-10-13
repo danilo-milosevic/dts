@@ -88,10 +88,21 @@ _DRC = {  # EncodeSettings.drc → ffmpeg acompressor (DTS Core has no DRC metad
 @dataclass
 class EncodePlan:
     args: list[str]
+    #: filter graph doing only the layout / sample-rate conversion (no DRC, no limiter), ends in [out] — reused by the format benchmark
+    layout_graph: str
     channels: int
     sample_rate: int
     kbps: int
     notes: list[str] = field(default_factory=list)
+
+
+def upmix_graph(src_ch: int) -> str:
+    """Mono / stereo → 5.1(side): stereo on L/R, mono on C, surrounds silent, LFE = 80 Hz low-pass of the input. Ends in [mix]."""
+    front = "FL=c0|FR=c1|FC=0*c0" if src_ch == 2 else "FL=0*c0|FR=0*c0|FC=c0"
+    lfe_sum = "0.5*c0+0.5*c1" if src_ch == 2 else "c0"
+    return (f"[0:a]asplit=2[m][l];[l]pan=mono|c0={lfe_sum},lowpass=f=80[lfe];"
+            f"[m]pan=5.0(side)|{front}|SL=0*c0|SR=0*c0[five];"
+            "[five][lfe]join=inputs=2:channel_layout=5.1(side):map=0.0-FL|0.1-FR|0.2-FC|1.0-LFE|0.3-SL|0.4-SR[mix]")
 
 
 def _target_rate(sr: int) -> int:
@@ -120,17 +131,11 @@ def plan_encode(ffmpeg: str, src: Path, out: Path, track: dict[str, Any], s: dic
     elif layout in ("5.1", "7.1"):
         if layout == "7.1":
             notes.append("DTS Core carries at most 5.1 — downmixed to 5.1")
-        if src_ch >= 6:
-            target, ch = "5.1(side)", 6
-        elif src_ch == 2 and s.get("generateLfe"):
-            target, ch = "5.1(side)", 6
-            graph = ("[0:a]asplit=2[m][l];[l]pan=mono|c0=0.5*c0+0.5*c1,lowpass=f=80[lfe];"
-                     "[m]pan=5.0(side)|FL=c0|FR=c1|FC=0*c0|SL=0*c0|SR=0*c1[five];"
-                     "[five][lfe]join=inputs=2:channel_layout=5.1(side):map=0.0-FL|0.1-FR|0.2-FC|1.0-LFE|0.3-SL|0.4-SR[mix]")
-            notes.append("stereo source: LFE generated from L/R (80 Hz low-pass), other channels silent")
-        else:
-            target, ch = ("mono", 1) if src_ch == 1 else ("stereo", 2)
-            notes.append(f"{src_ch}-channel source is not upmixed — encoded as {target}")
+        target, ch = "5.1(side)", 6
+        if src_ch <= 2:
+            graph = upmix_graph(src_ch)
+            where = "L/R" if src_ch == 2 else "the centre channel"
+            notes.append(f"{'stereo' if src_ch == 2 else 'mono'} source upmixed to 5.1: audio on {where}, LFE from its bass (80 Hz low-pass), surrounds silent")
     else:  # auto: keep the source layout where DTS Core can carry it
         target, ch = {1: ("mono", 1), 2: ("stereo", 2), 3: ("quad(side)", 4), 4: ("quad(side)", 4), 5: ("5.0(side)", 5)}.get(src_ch, ("5.1(side)", 6))
 
@@ -157,7 +162,9 @@ def plan_encode(ffmpeg: str, src: Path, out: Path, track: dict[str, Any], s: dic
             "-c:a", "dca", "-strict", "-2", "-b:a", f"{kbps}k",
             "-progress", "pipe:1", "-nostats",
             "-f", "wav" if s.get("container") == "wav" else "dts", str(out)]
-    return EncodePlan(args=args, channels=ch, sample_rate=sr, kbps=kbps, notes=notes)
+    layout_only = f"aformat=channel_layouts={target}:sample_rates={sr}"
+    layout_graph = f"{graph};[mix]{','.join(pre + [layout_only])}[out]" if graph else f"[0:a]{','.join(pre + [layout_only])}[out]"
+    return EncodePlan(args=args, layout_graph=layout_graph, channels=ch, sample_rate=sr, kbps=kbps, notes=notes)
 
 
 def pcm_codec(track: dict[str, Any]) -> str:

@@ -13,6 +13,7 @@ import { CardHeader } from '@/components/ui/Card';
 import { Legend } from '@/components/ui/Legend';
 import { ScatterChart } from '@/components/charts/ScatterChart';
 import { SavingsBars } from '@/components/charts/SavingsBars';
+import { FormatComparison } from '@/components/charts/FormatComparison';
 import { Sparkline } from '@/components/charts/Sparkline';
 import { LAYOUT_GROUPS, layoutLegend, layoutToneVar } from '@/components/charts/useChartScales';
 import { fmtDuration, layoutGroupLabel } from '@/lib/format';
@@ -34,6 +35,7 @@ function Kpi({ label, value, valueColor, tag, tagTone, spark, sparkColor }: { la
 export function CompareView() {
   const [stats, setStats] = useState<CompareStats | null>(null);
   const doneCount = useData(d => d.jobs.filter(j => j.status === 'done' || j.status === 'failed').length);
+  const benchDone = useData(d => d.jobs.filter(j => j.benchmarkStatus && j.benchmarkStatus !== 'running').length);
   const track = useData(selectedTrack); const select = useData(d => d.select);
   const group = useUi(u => u.compareLayout); const setUi = useUi(u => u.set); const toast = useUi(u => u.toast);
   const [hiddenScatter, setHiddenScatter] = useState<string[]>([]);
@@ -42,7 +44,7 @@ export function CompareView() {
   const [sort, setSort] = useState<'savings' | 'size' | 'name'>('savings');
   const nav = useNavigate();
 
-  useEffect(() => { api.stats.compare().then(setStats).catch(e => toast({ tone: 'error', title: 'Could not load statistics', message: String(e) })); }, [doneCount, toast]);
+  useEffect(() => { api.stats.compare().then(setStats).catch(e => toast({ tone: 'error', title: 'Could not load statistics', message: String(e) })); }, [doneCount, benchDone, toast]);
 
   const files = useMemo(() => {
     const f = (stats?.sessionFiles ?? []).filter(r => group === 'all' || r.layout === group);
@@ -85,6 +87,11 @@ export function CompareView() {
           sub={timeMetric === 'encode' ? 'WAV → DTS · each dot is one encode · dashed lines are linear fits · hover a dot for details' : 'DTS → WAV · each dot is one decode · dashed lines are linear fits · hover a dot for details'}
           right={<><Legend items={layoutLegend} hidden={hiddenScatter} onToggle={k => setHiddenScatter(h => (h.includes(k) ? h.filter(x => x !== k) : [...h, k]))} /><Segmented label="Time shown" value={timeMetric} onChange={setTimeMetric} options={[{ value: 'encode', label: 'Encode' }, { value: 'decode', label: 'Decode' }]} /></>} />
         {stats ? (timePoints.length || timeMetric === 'encode' ? <ScatterChart data={timePoints} hidden={hiddenScatter} height={300} highlight={track?.name} /> : <div className="t-body c-muted" style={{ height: 356, display: 'grid', placeItems: 'center' }}>No decode times yet — encode a track to measure one.</div>) : <div className="skeleton" style={{ height: 356 }} />}
+      </section>
+
+      <section className={s.card}>
+        <CardHeader title="Format comparison" sub="One row per encoded file, one column per codec · size, reduction vs WAV, encode and decode time · hover ⓘ for details" />
+        {stats ? <FormatComparison rows={files} onOpen={id => { select(id); nav('/'); }} /> : <div className="skeleton" style={{ height: 240 }} />}
       </section>
 
       <div className={s.row}>

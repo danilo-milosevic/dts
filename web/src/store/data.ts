@@ -127,7 +127,8 @@ function startPolling() {
   if (timer) return;
   const tick = async () => {
     try { await useData.getState().refresh(); } catch { /* keep polling */ }
-    const busy = useData.getState().jobs.some(j => j.status === 'queued' || j.status === 'encoding');
+    // keep polling while encodes run and while their format benchmarks are still being measured
+    const busy = useData.getState().jobs.some(j => j.status === 'queued' || j.status === 'encoding' || j.benchmarkStatus === 'running');
     timer = busy ? setTimeout(tick, 500) : null;
   };
   timer = setTimeout(tick, 500);

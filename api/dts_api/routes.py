@@ -273,7 +273,7 @@ def get_settings():
 def put_settings():
     b = body()
     cur = app_settings()
-    for k in ("outputDevice", "bufferSize", "previewAfterEncode"):
+    for k in ("outputDevice", "bufferSize", "previewAfterEncode", "benchmarkFormats"):
         if k in b:
             cur[k] = b[k]
     if isinstance(b.get("defaults"), dict):
@@ -425,6 +425,8 @@ def compare_stats():
                 "outputMB": round(j["outputBytes"] / d.MB, 2) if j.get("outputBytes") else None,
                 "status": "done" if j["status"] == "done" else "failed", **({"reason": j["error"]} if j.get("error") else {}),
                 "durationSec": tracks.get(j["trackId"], {}).get("durationSec", 0), "encodeSeconds": j.get("encodeSeconds"),
-                "decodeSeconds": j.get("decodeSeconds"), "decodedMB": round(j["decodedBytes"] / d.MB, 2) if j.get("decodedBytes") else None}
+                "decodeSeconds": j.get("decodeSeconds"), "decodedMB": round(j["decodedBytes"] / d.MB, 2) if j.get("decodedBytes") else None,
+                "outputBytes": j.get("outputBytes"), "decodedBytes": j.get("decodedBytes"), "inputBytes": j["inputBytes"],
+                "benchmarkStatus": j.get("benchmarkStatus"), "benchmarks": j.get("benchmarks") or []}
                for j in jobs if not j.get("_cleared") and j["trackId"] in tracks]
     return jsonify({"encodes": encodes, "sessionFiles": session})

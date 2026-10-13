@@ -45,6 +45,10 @@ Computed on the server and already binned to the `cols × rows` pixel grid (at m
 
 Job lifecycle: `queued → encoding → done | failed`. Each job encodes WAV → DTS and then decodes the DTS back to WAV (`progress` 0–0.9 is the encode, the rest the decode), timing both: `encodeSeconds` / `outputBytes` and `decodeSeconds` / `decodedBytes` (also on `Track.output`), for comparing compression and decompression. Cancelling removes the job. While encoding, the server updates `progress` (0–1, from ffmpeg's `-progress` output) and `etaSec`; on `done` it fills `outputBytes`, `ratio`, `encodeSeconds`, `notes` (adjustments such as resampling or a bitrate clamp) and sets the track's `status: 'encoded'` and `output` (incl. the real `bitrateKbps`, `channels`, `sampleRate`). On failure it sets `error` (ffmpeg's message) and the track's `status: 'error'`.
 
+**Format benchmark.** When `AppSettingsDto.benchmarkFormats` is on (default), after the DTS result is saved the server compresses and decompresses the same input with FLAC, AC-3, AAC, MP3 and Opus — same channel layout and sample rate as the DTS encode (MP3 is downmixed to stereo, Opus resampled to 48 kHz) — and keeps only the numbers. The job's `benchmarkStatus` goes `running → done` and `benchmarks` holds one `BenchmarkResult` per format `{ format, label, lossless, channels, sampleRate, bitrateKbps, sizeBytes, encodeSeconds, decodeSeconds, decodedBytes, note, error }`. The job is already `done` while this runs, so the DTS file is available immediately.
+
+**Layouts.** `5.1` / `7.1` always produce 5.1: 7.1 is downmixed; stereo sources go to L/R and mono to C, the LFE gets the input's bass (80 Hz low-pass), surrounds stay silent. `2.0` downmixes surround with `downmix` (Lo/Ro, Lt/Rt or front-only).
+
 **Progress updates are polled, not pushed.** The client polls `GET /api/jobs` (+ `/api/tracks`) every 500 ms only while a job is queued or encoding, and stops when the queue is idle. For one user on a local server that costs nothing and needs no extra connection type; if push is ever needed, a Server-Sent Events endpoint can replace the poll without changing the job model.
 
 ## Statistics (Compare page)
@@ -52,7 +56,7 @@ Job lifecycle: `queued → encoding → done | failed`. Each job encodes WAV →
 |---|---|---|---|
 
 - `encodes`: every finished encode `{ file, layout, inputMB, seconds }` (history + session) — scatter chart. `layout` is the output channel group: `mono`, `stereo` or `surround`.
-- `sessionFiles`: per-file result for this session `{ trackId, file, layout, inputMB, outputMB | null, status, reason?, durationSec, encodeSeconds, decodeSeconds, decodedMB }`.
+- `sessionFiles`: per-file result for this session `{ trackId, file, layout, inputMB, outputMB | null, status, reason?, durationSec, encodeSeconds, decodeSeconds, decodedMB, inputBytes, outputBytes, decodedBytes, benchmarkStatus, benchmarks }` — `benchmarks` is the format comparison below.
 
 ## Capabilities
 | GET | `/api/capabilities` | — | `Capabilities` — containers and layouts, bitrate limits per output channel count, notes for adapted layouts |

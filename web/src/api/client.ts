@@ -76,9 +76,9 @@ export const api = {
      */
     outputAudio: (t: Track) => {
       const kbps = t.output ? t.output.bitrateKbps : t.settings.bitrateKbps;
-      const mono = t.settings.layout === '1.0' && t.channels > 1;
-      return audioCache.once(`out:${t.id}:${kbps}:${mono ? 'mono' : 'ch'}:${encodedKey(t)}`, async () =>
-        USE_MOCKS || !t.output ? (await synth()).simulateDtsOutput(await api.tracks.audio(t), kbps, mono) : fetchAudio(`/api/tracks/${t.id}/output/audio`));
+      const { layout, downmix } = t.settings;
+      return audioCache.once(`out:${t.id}:${kbps}:${layout}:${downmix}:${encodedKey(t)}`, async () =>
+        USE_MOCKS || !t.output ? (await synth()).simulateDtsOutput(await api.tracks.audio(t), kbps, { layout, downmix }) : fetchAudio(`/api/tracks/${t.id}/output/audio`));
     },
     /** True when the server can compute this lane's STFT (source always; output once encoded). */
     hasServerStft: (t: Track, which: 'source' | 'output') => !USE_MOCKS && (which === 'source' || (t.status === 'encoded' && !!t.output)),

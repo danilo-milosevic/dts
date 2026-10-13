@@ -204,3 +204,48 @@ def test_encode_then_decode_is_timed(client, tmp_path):
     # DTS files are no longer accepted as imports
     r = client.post("/api/tracks", data={"files": (io.BytesIO(b"x"), "Mix.dts")}, content_type="multipart/form-data")
     assert r.status_code == 415
+
+
+def wait_benchmark(client, timeout: float = 60):
+    end = time.time() + timeout
+    while time.time() < end:
+        jobs = client.get("/api/jobs").get_json()["jobs"]
+        if jobs and all(j.get("benchmarkStatus") in ("done", "partial", None) and j["status"] == "done" for j in jobs) and any(j.get("benchmarkStatus") for j in jobs):
+            return jobs
+        time.sleep(0.2)
+    raise AssertionError("benchmark timed out")
+
+
+def test_format_benchmark_runs_after_encode(client, tmp_path):
+    t = upload(client, make_wav(tmp_path / "Bench.wav", channels=6))
+    client.post("/api/jobs", json={"trackIds": [t["id"]]})
+    assert wait_done(client, t["id"])["status"] == "encoded"   # the DTS result is ready before the benchmark finishes
+    job = wait_benchmark(client)[0]
+    assert job["benchmarkStatus"] == "done"
+    res = {r["format"]: r for r in job["benchmarks"]}
+    assert set(res) == {"flac", "ac3", "aac", "mp3", "opus"}
+    for r in res.values():
+        assert r["error"] is None and r["sizeBytes"] > 0 and r["encodeSeconds"] > 0 and r["decodeSeconds"] > 0 and r["decodedBytes"] > 0
+    assert res["flac"]["lossless"] and res["flac"]["channels"] == 6 and res["opus"]["channels"] == 6
+    assert res["mp3"]["channels"] == 2 and "downmixed" in res["mp3"]["note"]
+    row = client.get("/api/stats/compare").get_json()["sessionFiles"][0]
+    assert len(row["benchmarks"]) == 5 and row["inputBytes"] > row["outputBytes"]
+    assert not list((tmp_path / "storage" / "outputs" / t["id"]).glob(".bench*"))  # temp files cleaned up
+
+
+def test_benchmark_can_be_turned_off(client, tmp_path):
+    client.put("/api/settings", json={"benchmarkFormats": False})
+    t = upload(client, make_wav(tmp_path / "Off.wav"))
+    client.post("/api/jobs", json={"trackIds": [t["id"]]})
+    wait_done(client, t["id"])
+    time.sleep(0.5)
+    assert not client.get("/api/jobs").get_json()["jobs"][0].get("benchmarkStatus")
+
+
+def test_stereo_to_51_is_upmixed(client, tmp_path):
+    t = upload(client, make_wav(tmp_path / "Up.wav"))
+    client.post("/api/jobs", json={"trackIds": [t["id"]], "settings": {"layout": "5.1"}})
+    done = wait_done(client, t["id"])
+    assert done["output"]["channels"] == 6
+    job = client.get("/api/jobs").get_json()["jobs"][0]
+    assert any("upmixed to 5.1" in n for n in job["notes"])
